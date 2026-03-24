@@ -17,7 +17,8 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Navbar />
-        <main>
+        {/* pt accounts for fixed ribbon (36px) + navbar (72px) = 108px */}
+        <main style={{ paddingTop: "var(--header-total)" }}>
           {children}
         </main>
       </body>
