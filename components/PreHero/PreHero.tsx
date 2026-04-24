@@ -12,52 +12,51 @@ export default function PreHero() {
         {/* Left Content */}
         <div className="flex flex-col justify-center pl-6 lg:pl-16 pr-6 lg:pr-12 py-20 lg:py-0 max-w-3xl">
           {/* Gold Label */}
-          <span className="text-xs uppercase tracking-[0.22em] text-[#c9a84c] font-medium mb-6 block">
+          <span className="text-xs uppercase tracking-[0.22em] text-[#c9a84c] font-medium mb-8 block">
             Vadodara&apos;s Trusted Developer
           </span>
 
-          {/* Heading */}
+          {/* ✅ CLEAN HEADING — each statement on its own line, visually balanced */}
           <h1
             style={{
               fontFamily: "var(--font-playfair), 'Playfair Display', serif",
-              fontWeight: 800,
-              lineHeight: 1.05,
+              fontWeight: 700,
+              lineHeight: 1.2,
             }}
-            className="text-5xl md:text-6xl lg:text-7xl text-[#1a1a1a]"
+            className="text-4xl md:text-5xl lg:text-6xl text-[#1a1a1a]"
           >
-            Building spaces
+            Acquiring land with vision.
             <br />
-            that inspire
+            Developing with integrity.
             <br />
-            generations.
+            <span className="text-[#c9a84c]">Inspiring generations.</span>
           </h1>
 
-          {/* Body */}
-          <p className="text-base text-[#5a5a5a] leading-relaxed mt-6 max-w-sm">
-            From premium residential townships to vibrant commercial spaces —
-            crafting landmark developments across Vadodara for over two decades.
+          {/* Optional: small supporting line (remove if you want zero text below heading) */}
+          <p className="text-sm text-[#8a8a8a] mt-6 max-w-sm tracking-wide">
+            Land acquisition | Development | Consultation
           </p>
 
           {/* CTA Buttons */}
           <div className="mt-10 flex flex-col sm:flex-row gap-4">
             <Link
               href="/projects"
-              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#1a1a1a] text-white text-sm font-medium rounded-none hover:bg-[#333] transition-colors duration-200"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#1a1a1a] text-white text-sm font-medium rounded-none hover:bg-[#333] transition-colors duration-200"
             >
               Explore Projects
             </Link>
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 border border-[#e8e4de] text-[#1a1a1a] text-sm font-medium rounded-none hover:border-[#1a1a1a] transition-colors duration-200"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-[#e8e4de] text-[#1a1a1a] text-sm font-medium rounded-none hover:border-[#1a1a1a] transition-colors duration-200"
             >
               Talk to an Expert
             </Link>
           </div>
 
           {/* Stat Row */}
-          <div className="mt-12 pt-8 border-t border-[#e8e4de] flex gap-8 items-center flex-wrap">
+          <div className="mt-14 pt-8 border-t border-[#e8e4de] flex gap-10 items-center flex-wrap">
             <div>
-              <div className="text-2xl font-bold text-[#1a1a1a]">20+</div>
+              <div className="text-2xl font-bold text-[#1a1a1a]">35+</div>
               <div className="text-xs uppercase tracking-wider text-[#9a9a9a] mt-1">
                 Years Excellence
               </div>
@@ -79,7 +78,7 @@ export default function PreHero() {
           </div>
         </div>
 
-        {/* Right Image — flush to right edge */}
+        {/* Right Image */}
         <div className="relative hidden lg:block overflow-hidden">
           <Image
             src="/BG.png"

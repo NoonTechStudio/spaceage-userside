@@ -161,6 +161,174 @@ const BLOG_POSTS: BlogPost[] = [
 
 const CATEGORIES: BlogCategory[] = ["All", "News", "Events", "Investment", "Real Estate Tips", "Community"];
 
+// ─── NEWSPAPER STYLES ────────────────────────────────────────────────────────
+
+const npStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IM+Fell+English:ital@0;1&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+  :root {
+    --newsprint: #f5f0e8;
+    --ink: #1a1008;
+    --ink-faded: #4a3f30;
+    --rule: #2a1f10;
+    --gold: #c9a84c;
+    --gold-muted: #b8962e;
+    --column-gap: 1px solid #2a1f10;
+  }
+
+  .np-root {
+    background-color: var(--newsprint);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    color: var(--ink);
+    font-family: 'Libre Baskerville', Georgia, serif;
+    min-height: 100vh;
+  }
+
+  .np-masthead-font { font-family: 'UnifrakturMaguntia', cursive; }
+  .np-headline-font { font-family: 'Playfair Display', Georgia, serif; }
+  .np-body-font    { font-family: 'IM Fell English', Georgia, serif; }
+
+  /* Decorative rules */
+  .rule-thick  { border-top: 3px solid var(--rule); }
+  .rule-double { border-top: 3px double var(--rule); }
+  .rule-thin   { border-top: 1px solid var(--rule); }
+  .rule-bottom-thick { border-bottom: 3px solid var(--rule); }
+  .rule-bottom-thin  { border-bottom: 1px solid var(--rule); }
+
+  /* Newspaper column divider */
+  .col-divide {
+    column-gap: 24px;
+    column-rule: var(--column-gap);
+  }
+
+  /* Clipping / torn paper effect on cards */
+  .clipping {
+    background: var(--newsprint);
+    border: 1px solid #c8b89a;
+    box-shadow:
+      2px 2px 0 #c0a870,
+      4px 4px 0 rgba(0,0,0,0.08),
+      0 8px 32px rgba(0,0,0,0.12);
+    position: relative;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .clipping:hover {
+    transform: translateY(-3px) rotate(0.3deg);
+    box-shadow:
+      2px 2px 0 #c0a870,
+      6px 10px 32px rgba(0,0,0,0.18);
+  }
+
+  /* Slight random tilt variants */
+  .tilt-l { transform: rotate(-0.6deg); }
+  .tilt-r { transform: rotate(0.5deg); }
+  .tilt-l:hover { transform: rotate(-0.2deg) translateY(-3px); }
+  .tilt-r:hover { transform: rotate(0.2deg) translateY(-3px); }
+
+  /* Stamp / dateline */
+  .dateline {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--ink-faded);
+    text-transform: uppercase;
+  }
+
+  /* Category ribbon */
+  .cat-ribbon {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--newsprint);
+    font-family: 'Libre Baskerville', serif;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+  }
+  .cat-ribbon.gold {
+    background: var(--gold);
+    color: var(--ink);
+  }
+
+  /* Pull quote decoration */
+  .pull-quote::before {
+    content: '"';
+    font-family: 'Playfair Display', serif;
+    font-size: 5rem;
+    line-height: 0.6;
+    color: var(--gold);
+    float: left;
+    margin-right: 8px;
+  }
+
+  /* Masthead ornament lines */
+  .masthead-ornament {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
+  }
+  .masthead-ornament::before,
+  .masthead-ornament::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--ink);
+  }
+
+  /* Photo caption style */
+  .photo-caption {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 0.68rem;
+    color: var(--ink-faded);
+    border-top: 1px solid #b0a090;
+    padding-top: 4px;
+    margin-top: 4px;
+  }
+
+  /* Aged photo effect */
+  .aged-photo {
+    filter: sepia(25%) contrast(1.05) brightness(0.97);
+  }
+
+  /* Scissors cut line on featured */
+  .scissors-border {
+    border: 2px dashed #a09070;
+    padding: 2px;
+  }
+
+  /* Animated fade-in for reveal */
+  @keyframes np-reveal {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .np-reveal { animation: np-reveal 0.6s ease forwards; }
+
+  /* Input newspaper style */
+  .np-input {
+    background: rgba(255,255,255,0.4);
+    border: 1px solid #a09070;
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    color: var(--ink);
+    outline: none;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+  }
+  .np-input:focus { border-color: var(--gold); background: rgba(255,255,255,0.7); }
+  .np-input::placeholder { color: #9a8878; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--newsprint); }
+  ::-webkit-scrollbar-thumb { background: #a09070; }
+`;
+
 // ─── REVEAL SECTION ─────────────────────────────────────────────────────────
 
 function RevealSection({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
@@ -169,11 +337,11 @@ function RevealSection({ children, delay = 0, className = "" }: { children: Reac
         const el = ref.current;
         if (!el) return;
         el.style.opacity = "0";
-        el.style.transform = "translateY(28px)";
-        el.style.transition = `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`;
+        el.style.transform = "translateY(22px)";
+        el.style.transition = `opacity 0.65s ease ${delay}ms, transform 0.65s ease ${delay}ms`;
         const observer = new IntersectionObserver(
             ([entry]) => { if (entry.isIntersecting) { el.style.opacity = "1"; el.style.transform = "translateY(0)"; } },
-            { threshold: 0.08 }
+            { threshold: 0.06 }
         );
         observer.observe(el);
         return () => observer.disconnect();
@@ -181,203 +349,206 @@ function RevealSection({ children, delay = 0, className = "" }: { children: Reac
     return <div ref={ref} className={className}>{children}</div>;
 }
 
-function SectionHeader({ number, label, title, subtitle }: { number: string; label: string; title: string; subtitle?: string }) {
-    return (
-        <RevealSection className="mb-16">
-            <div className="flex items-center gap-4 mb-4">
-                <span className="text-5xl font-serif font-bold text-gray-200 tracking-tighter">{number}</span>
-                <div>
-                    <span className="block text-[10px] uppercase tracking-[0.2em] font-semibold text-[#c9a84c] mb-1">{label}</span>
-                    <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900">{title}</h2>
-                </div>
-            </div>
-            <div className="w-12 h-px bg-[#c9a84c] ml-[4.5rem]" />
-            {subtitle && <p className="ml-[4.5rem] mt-4 text-sm text-gray-400 leading-relaxed max-w-lg">{subtitle}</p>}
-        </RevealSection>
-    );
-}
-
 // ─── AUTHOR AVATAR ──────────────────────────────────────────────────────────
 
-function AuthorAvatar({ name, size = 36 }: { name: string; size?: number }) {
-    const initials = name
-        .split(" ")
-        .slice(0, 2)
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase();
-
+function AuthorAvatar({ name, size = 34 }: { name: string; size?: number }) {
+    const initials = name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
     return (
         <div
-            className="shrink-0 flex items-center justify-center rounded-full font-bold text-white text-xs"
-            style={{
-                width: size,
-                height: size,
-                backgroundColor: "#c9a84c",
-                fontSize: size < 36 ? 10 : 12,
-            }}
+            className="shrink-0 flex items-center justify-center rounded-full font-bold text-white"
+            style={{ width: size, height: size, backgroundColor: "#c9a84c", fontSize: size < 36 ? 10 : 12, fontFamily: "'Libre Baskerville', serif" }}
         >
             {initials}
         </div>
     );
 }
 
-// ─── FEATURED HERO CARD ─────────────────────────────────────────────────────
+// ─── TODAY'S DATE ────────────────────────────────────────────────────────────
+
+function TodayDate() {
+    const d = new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+    return <span>{d}</span>;
+}
+
+// ─── MASTHEAD ────────────────────────────────────────────────────────────────
+
+function Masthead() {
+    return (
+        <header style={{ borderBottom: "4px double #2a1f10" }} className="pb-4 mb-0">
+            {/* Top info bar */}
+            <div className="flex flex-wrap items-center justify-between px-4 sm:px-8 py-2" style={{ borderBottom: "1px solid #2a1f10", fontSize: "0.65rem", fontFamily: "'IM Fell English', serif", color: "#4a3f30", fontStyle: "italic" }}>
+                <span><TodayDate /></span>
+                <span className="hidden sm:inline" style={{ letterSpacing: "0.15em", textTransform: "uppercase", fontStyle: "normal", fontFamily: "'Libre Baskerville', serif", fontSize: "0.55rem" }}>Est. 2005 · Vadodara, Gujarat</span>
+                <span>Vol. XIX · No. 42</span>
+            </div>
+
+            {/* Masthead title */}
+            <div className="text-center px-4 py-6 sm:py-8">
+                <div className="masthead-ornament mb-3 px-4 sm:px-12">
+                    <span style={{ fontSize: "0.6rem", letterSpacing: "0.3em", textTransform: "uppercase", fontFamily: "'Libre Baskerville', serif" }}>SpaceAge Group</span>
+                </div>
+                <h1 className="np-masthead-font" style={{ fontSize: "clamp(3rem, 10vw, 7rem)", lineHeight: 1, color: "#1a1008", letterSpacing: "-0.01em" }}>
+                    The Property Gazette
+                </h1>
+                <div className="masthead-ornament mt-3 px-4 sm:px-12">
+                    <span style={{ fontSize: "0.6rem", letterSpacing: "0.3em", textTransform: "uppercase", fontFamily: "'Libre Baskerville', serif" }}>Vadodara's Premier Real Estate Journal</span>
+                </div>
+            </div>
+
+            {/* Nav bar */}
+            <div className="flex flex-wrap items-center justify-center gap-0 px-4" style={{ borderTop: "1px solid #2a1f10", borderBottom: "1px solid #2a1f10" }}>
+                {["Home", "Projects", "Blog", "Community", "Contact"].map((item, i) => (
+                    <Link
+                        key={item}
+                        href={item === "Home" ? "/" : `/${item.toLowerCase()}`}
+                        className="px-4 sm:px-6 py-2 text-center transition-colors hover:bg-amber-900/10"
+                        style={{
+                            fontFamily: "'Libre Baskerville', serif",
+                            fontSize: "0.65rem",
+                            fontWeight: 700,
+                            letterSpacing: "0.18em",
+                            textTransform: "uppercase",
+                            color: item === "Blog" ? "#c9a84c" : "#1a1008",
+                            borderRight: i < 4 ? "1px solid #2a1f10" : "none",
+                        }}
+                    >
+                        {item}
+                    </Link>
+                ))}
+            </div>
+        </header>
+    );
+}
+
+// ─── FEATURED CARD (newspaper front-page style) ─────────────────────────────
 
 function FeaturedCard({ post }: { post: BlogPost }) {
     const src = coverSrc(post.image);
 
     return (
-        <Link href={`/blog/${post.slug}`} className="group relative block overflow-hidden bg-gray-900" style={{ minHeight: 480 }}>
-            {src ? (
-                <Image
-                    src={src}
-                    alt={post.title}
-                    fill
-                    className="object-cover opacity-50 transition-all duration-700 group-hover:opacity-40 group-hover:scale-105"
-                    priority
-                />
-            ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
-            )}
+        <Link href={`/blog/${post.slug}`} className="group block scissors-border clipping" style={{ background: "#f5f0e8" }}>
+            <div className="p-4 sm:p-6">
+                {/* Header of clipping */}
+                <div className="flex items-center justify-between mb-3" style={{ borderBottom: "2px solid #2a1f10", paddingBottom: "8px" }}>
+                    <span className="cat-ribbon gold">{post.category}</span>
+                    <span className="dateline">{post.date} · {post.readTime}</span>
+                </div>
 
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-            <div className="relative z-10 flex flex-col justify-end h-full p-8 md:p-12" style={{ minHeight: 480 }}>
-                <div className="max-w-3xl">
-                    <div className="flex items-center gap-3 mb-4">
-                        <span className="bg-[#c9a84c] text-gray-900 text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1.5">
-                            Featured
-                        </span>
-                        <span className="text-white/60 text-[10px] uppercase tracking-[0.2em] font-semibold border border-white/20 px-3 py-1.5">
-                            {post.category}
-                        </span>
-                    </div>
-
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl text-white font-serif font-bold leading-[1.15] mb-4 group-hover:text-[#c9a84c] transition-colors duration-300">
-                        {post.title}
-                    </h2>
-
-                    <p className="text-white/65 text-base leading-relaxed max-w-2xl mb-6 hidden md:block">
-                        {post.excerpt}
-                    </p>
-
-                    <div className="flex items-center gap-5">
-                        <AuthorAvatar name={post.author} />
-                        <div>
-                            <p className="text-white text-sm font-semibold">{post.author}</p>
-                            <p className="text-white/45 text-xs">{post.date} · {post.readTime}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Image */}
+                    {src && (
+                        <div className="relative overflow-hidden" style={{ aspectRatio: "4/3" }}>
+                            <Image src={src} alt={post.title} fill className="object-cover aged-photo" />
+                            <div className="photo-caption absolute bottom-0 left-0 right-0 bg-amber-50/90 px-2 pb-1">
+                                Above: Manjusar Industrial Corridor · SpaceAge Group
+                            </div>
                         </div>
-                        <span className="ml-auto text-[#c9a84c] text-sm font-semibold uppercase tracking-wider group-hover:translate-x-1 transition-transform duration-200">
-                            Read Article →
-                        </span>
+                    )}
+
+                    {/* Content */}
+                    <div className="flex flex-col justify-between">
+                        <div>
+                            <div className="text-center mb-3" style={{ borderBottom: "1px solid #a09070", paddingBottom: "6px" }}>
+                                <span style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.7rem", color: "#4a3f30", letterSpacing: "0.1em" }}>
+                                    ✦ Editor's Selection ✦
+                                </span>
+                            </div>
+                            <h2 className="np-headline-font group-hover:text-amber-800 transition-colors"
+                                style={{ fontSize: "clamp(1.4rem, 3vw, 2.2rem)", fontWeight: 900, lineHeight: 1.15, marginBottom: "1rem", color: "#1a1008" }}>
+                                {post.title}
+                            </h2>
+                            <p className="np-body-font" style={{ fontSize: "0.9rem", lineHeight: 1.75, color: "#3a2f20" }}>
+                                {post.excerpt}
+                            </p>
+                        </div>
+                        <div className="mt-4 pt-3 flex items-center gap-3" style={{ borderTop: "1px solid #a09070" }}>
+                            <AuthorAvatar name={post.author} />
+                            <div>
+                                <p style={{ fontFamily: "'Libre Baskerville', serif", fontWeight: 700, fontSize: "0.75rem", color: "#1a1008" }}>{post.author}</p>
+                                <p style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.65rem", color: "#6a5a48" }}>{post.authorRole}</p>
+                            </div>
+                            <span className="ml-auto np-headline-font group-hover:translate-x-1 transition-transform"
+                                style={{ color: "#c9a84c", fontWeight: 700, fontSize: "0.75rem", letterSpacing: "0.1em" }}>
+                                Read Full Story →
+                            </span>
+                        </div>
                     </div>
+                </div>
+
+                {/* Tags as keywords */}
+                <div className="mt-4 pt-3 flex flex-wrap gap-2" style={{ borderTop: "1px dashed #a09070" }}>
+                    <span style={{ fontFamily: "'Libre Baskerville', serif", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: "#6a5a48" }}>KEYWORDS:</span>
+                    {post.tags.map(tag => (
+                        <span key={tag} style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.68rem", color: "#4a3f30" }}>{tag}</span>
+                    ))}
                 </div>
             </div>
         </Link>
     );
 }
 
-// ─── BLOG CARD ─────────────────────────────────────────────────────────────
+// ─── BLOG CARD (newspaper clipping) ─────────────────────────────────────────
+
+const TILT_CLASSES = ["tilt-l", "", "tilt-r", "", "tilt-l", "tilt-r", "", "tilt-l"];
 
 function BlogCard({ post, index }: { post: BlogPost; index: number }) {
     const src = coverSrc(post.image);
+    const tilt = TILT_CLASSES[index % TILT_CLASSES.length];
 
     return (
-        <RevealSection delay={index * 60}>
-            <Link href={`/blog/${post.slug}`} className="group flex flex-col bg-white overflow-hidden transition-all duration-300 hover:shadow-lg" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.05)" }}>
-                <div className="relative overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                    {src ? (
-                        <Image
-                            src={src}
-                            alt={post.title}
-                            fill
-                            className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                    ) : (
-                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" strokeWidth="1" opacity="0.5">
-                                <rect x="3" y="3" width="18" height="18" rx="2" />
-                                <circle cx="8.5" cy="8.5" r="1.5" />
-                                <polyline points="21 15 16 10 5 21" />
-                            </svg>
+        <RevealSection delay={index * 55}>
+            <Link href={`/blog/${post.slug}`} className={`group block clipping ${tilt}`} style={{ background: "#f5f0e8" }}>
+                <div className="p-4">
+                    {/* Clipping top rule */}
+                    <div className="flex items-center justify-between mb-2" style={{ borderBottom: "2px solid #2a1f10", paddingBottom: "6px" }}>
+                        <span className="cat-ribbon">{post.category}</span>
+                        <span className="dateline">{post.readTime}</span>
+                    </div>
+
+                    {/* Photo */}
+                    {src && (
+                        <div className="relative overflow-hidden mb-3 aged-photo" style={{ aspectRatio: "16/9" }}>
+                            <Image src={src} alt={post.title} fill className="object-cover" />
+                        </div>
+                    )}
+                    {!src && (
+                        <div className="mb-3 flex items-center justify-center" style={{ aspectRatio: "16/9", background: "#e8e0cc", border: "1px solid #c8b89a" }}>
+                            <span style={{ fontFamily: "'UnifrakturMaguntia', cursive", fontSize: "1.8rem", color: "#a09070", opacity: 0.5 }}>✦</span>
                         </div>
                     )}
 
-                    <div className="absolute top-3 left-3">
-                        <span className="bg-black/80 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-[0.18em] px-2.5 py-1">
-                            {post.category}
-                        </span>
-                    </div>
-                </div>
+                    {/* Dateline */}
+                    <p className="dateline mb-2">{post.date} — Vadodara</p>
 
-                <div className="flex flex-col flex-1 p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                        <span className="text-[10px] text-gray-400 uppercase tracking-[0.18em]">{post.date}</span>
-                        <span className="text-gray-200">·</span>
-                        <span className="text-[10px] text-gray-400 uppercase tracking-[0.18em]">{post.readTime}</span>
-                    </div>
-
-                    <h3 className="text-lg font-serif font-bold text-gray-900 mb-3 leading-snug group-hover:text-[#c9a84c] transition-colors duration-200">
+                    {/* Headline */}
+                    <h3 className="np-headline-font group-hover:text-amber-800 transition-colors mb-2"
+                        style={{ fontSize: "1.05rem", fontWeight: 900, lineHeight: 1.2, color: "#1a1008" }}>
                         {post.title}
                     </h3>
 
-                    <p className="text-gray-500 text-sm leading-relaxed line-clamp-3 flex-1">{post.excerpt}</p>
+                    {/* Thin rule */}
+                    <div style={{ borderTop: "1px solid #a09070", margin: "8px 0" }} />
 
-                    <div className="flex flex-wrap gap-1.5 mt-4">
-                        {post.tags.slice(0, 3).map((tag) => (
-                            <span key={tag} className="text-[10px] text-gray-400 border border-gray-100 px-2 py-0.5 uppercase tracking-wider">
-                                {tag}
-                            </span>
-                        ))}
-                    </div>
+                    {/* Excerpt */}
+                    <p className="np-body-font line-clamp-3" style={{ fontSize: "0.82rem", lineHeight: 1.7, color: "#3a2f20" }}>
+                        {post.excerpt}
+                    </p>
 
-                    <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                            <AuthorAvatar name={post.author} size={30} />
-                            <div>
-                                <p className="text-xs font-semibold text-gray-900 leading-tight">{post.author}</p>
-                                <p className="text-[10px] text-gray-400 leading-tight">{post.authorRole.split(",")[0]}</p>
-                            </div>
+                    {/* Footer */}
+                    <div className="mt-3 pt-3 flex items-center gap-2" style={{ borderTop: "1px dashed #a09070" }}>
+                        <AuthorAvatar name={post.author} size={28} />
+                        <div className="flex-1 min-w-0">
+                            <p style={{ fontFamily: "'Libre Baskerville', serif", fontWeight: 700, fontSize: "0.68rem", color: "#1a1008", lineHeight: 1.2 }}>{post.author}</p>
+                            <p style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.6rem", color: "#6a5a48" }}>{post.authorRole.split("·")[0].trim()}</p>
                         </div>
-                        <span className="text-[#c9a84c] text-xs font-bold uppercase tracking-wider group-hover:translate-x-0.5 transition-transform duration-200">
+                        <span className="np-headline-font shrink-0 group-hover:translate-x-0.5 transition-transform"
+                            style={{ color: "#c9a84c", fontWeight: 700, fontSize: "0.68rem" }}>
                             Read →
                         </span>
                     </div>
                 </div>
             </Link>
         </RevealSection>
-    );
-}
-
-// ─── JUMP NAV ───────────────────────────────────────────────────────────────
-
-function JumpNav({ active, onScroll }: { active: string; onScroll: (id: string) => void }) {
-    const sections = [
-        { id: "articles", label: "Articles", count: BLOG_POSTS.length },
-    ];
-
-    return (
-        <div className="sticky top-[72px] z-30 bg-white border-b border-gray-100">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                <div className="flex items-center gap-0 overflow-x-auto">
-                    {sections.map((s) => (
-                        <button
-                            key={s.id}
-                            onClick={() => onScroll(s.id)}
-                            className={`flex items-center gap-2 text-sm font-medium px-6 py-4 whitespace-nowrap border-b-2 transition-all duration-200 ${active === s.id ? "text-gray-900 border-[#c9a84c]" : "text-gray-400 border-transparent hover:text-gray-600"
-                                }`}
-                        >
-                            {s.label}
-                            <span className={`text-[10px] font-mono px-1.5 py-0.5 ${active === s.id ? "bg-[#c9a84c] text-gray-900" : "bg-gray-100 text-gray-400"}`}>
-                                {s.count}
-                            </span>
-                        </button>
-                    ))}
-                    <span className="ml-auto text-xs text-gray-400 whitespace-nowrap">{BLOG_POSTS.length} Total Articles</span>
-                </div>
-            </div>
-        </div>
     );
 }
 
@@ -397,133 +568,174 @@ function Sidebar({
     onSearch: (q: string) => void;
 }) {
     const recent = [...posts].sort((a, b) => b.id - a.id).slice(0, 4);
-
     const allTags = posts.flatMap((p) => p.tags);
-    const tagCount = allTags.reduce<Record<string, number>>((acc, t) => {
-        acc[t] = (acc[t] || 0) + 1;
-        return acc;
-    }, {});
-    const topTags = Object.entries(tagCount)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 12)
-        .map(([tag]) => tag);
+    const tagCount = allTags.reduce<Record<string, number>>((acc, t) => { acc[t] = (acc[t] || 0) + 1; return acc; }, {});
+    const topTags = Object.entries(tagCount).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([tag]) => tag);
+
+    const SideWidget = ({ title, children }: { title: string; children: React.ReactNode }) => (
+        <div className="clipping" style={{ background: "#f5f0e8", marginBottom: "20px" }}>
+            <div className="p-4">
+                <div style={{ borderBottom: "2px solid #2a1f10", paddingBottom: "6px", marginBottom: "12px" }}>
+                    <h4 className="np-headline-font" style={{ fontSize: "1rem", fontWeight: 900, color: "#1a1008" }}>{title}</h4>
+                </div>
+                {children}
+            </div>
+        </div>
+    );
 
     return (
-        <aside className="flex flex-col gap-8">
+        <aside>
             {/* Search */}
-            <div className="bg-white p-6" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.05)" }}>
-                <h4 className="text-lg font-serif font-bold text-gray-900 mb-5">Search</h4>
+            <SideWidget title="Search the Archive">
                 <div className="relative">
-                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="11" cy="11" r="8" />
-                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <svg className="absolute left-3 top-1/2 -translate-y-1/2" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9a8878" strokeWidth="2">
+                        <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => onSearch(e.target.value)}
                         placeholder="Search articles..."
-                        className="w-full pl-9 pr-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 border border-gray-100 outline-none focus:border-[#c9a84c] transition-colors"
+                        className="np-input"
+                        style={{ paddingLeft: "2rem" }}
                     />
                 </div>
-            </div>
+            </SideWidget>
 
             {/* Categories */}
-            <div className="bg-white p-6" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.05)" }}>
-                <h4 className="text-lg font-serif font-bold text-gray-900 mb-5">Categories</h4>
-                <div className="flex flex-col gap-1">
+            <SideWidget title="Sections">
+                <div className="flex flex-col gap-0.5">
                     {CATEGORIES.map((cat) => {
                         const count = cat === "All" ? posts.length : posts.filter((p) => p.category === cat).length;
+                        const isActive = activeCategory === cat;
                         return (
                             <button
                                 key={cat}
                                 onClick={() => onCategory(cat)}
-                                className="flex items-center justify-between px-3 py-2.5 text-sm transition-all duration-200 text-left"
+                                className="flex items-center justify-between py-2 px-2 text-left transition-colors"
                                 style={{
-                                    backgroundColor: activeCategory === cat ? "rgba(201,168,76,0.08)" : "transparent",
-                                    color: activeCategory === cat ? "#c9a84c" : "#666",
-                                    borderLeft: activeCategory === cat ? "2px solid #c9a84c" : "2px solid transparent",
-                                    fontWeight: activeCategory === cat ? 600 : 400,
+                                    fontFamily: "'Libre Baskerville', serif",
+                                    fontSize: "0.72rem",
+                                    fontWeight: isActive ? 700 : 400,
+                                    color: isActive ? "#c9a84c" : "#3a2f20",
+                                    background: isActive ? "rgba(201,168,76,0.1)" : "transparent",
+                                    borderLeft: isActive ? "3px solid #c9a84c" : "3px solid transparent",
+                                    borderBottom: "1px dashed #c8b89a",
                                 }}
                             >
                                 {cat}
-                                <span
-                                    className="text-xs px-2 py-0.5 rounded-full"
-                                    style={{
-                                        backgroundColor: activeCategory === cat ? "#c9a84c" : "#f0f0f0",
-                                        color: activeCategory === cat ? "#0f0f0f" : "#999",
-                                    }}
-                                >
-                                    {count}
-                                </span>
+                                <span style={{
+                                    fontFamily: "'Libre Baskerville', serif",
+                                    fontSize: "0.6rem",
+                                    background: isActive ? "#c9a84c" : "#d8ceb8",
+                                    color: isActive ? "#1a1008" : "#6a5a48",
+                                    padding: "1px 6px",
+                                    borderRadius: "2px",
+                                }}>{count}</span>
                             </button>
                         );
                     })}
                 </div>
-            </div>
+            </SideWidget>
 
             {/* Recent Posts */}
-            <div className="bg-white p-6" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.05)" }}>
-                <h4 className="text-lg font-serif font-bold text-gray-900 mb-5">Recent Posts</h4>
-                <div className="flex flex-col gap-4">
+            <SideWidget title="Recent Dispatches">
+                <div className="flex flex-col gap-3">
                     {recent.map((post) => {
                         const src = coverSrc(post.image);
                         return (
-                            <Link key={post.id} href={`/blog/${post.slug}`} className="group flex gap-3 items-start">
-                                <div className="relative w-16 h-14 shrink-0 overflow-hidden bg-gray-100">
-                                    {src && (
-                                        <Image
-                                            src={src}
-                                            alt={post.title}
-                                            fill
-                                            className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                            sizes="64px"
-                                        />
-                                    )}
-                                </div>
+                            <Link key={post.id} href={`/blog/${post.slug}`} className="group flex gap-3 items-start" style={{ borderBottom: "1px dashed #c8b89a", paddingBottom: "10px" }}>
+                                {src && (
+                                    <div className="relative w-14 h-12 shrink-0 overflow-hidden aged-photo" style={{ border: "1px solid #a09070" }}>
+                                        <Image src={src} alt={post.title} fill className="object-cover" sizes="56px" />
+                                    </div>
+                                )}
                                 <div className="min-w-0">
-                                    <p className="text-xs font-semibold text-gray-900 group-hover:text-[#c9a84c] transition-colors duration-200 leading-snug line-clamp-2">
+                                    <p className="np-headline-font group-hover:text-amber-800 transition-colors line-clamp-2"
+                                        style={{ fontSize: "0.72rem", fontWeight: 700, color: "#1a1008", lineHeight: 1.3 }}>
                                         {post.title}
                                     </p>
-                                    <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wider">{post.date}</p>
+                                    <p className="dateline mt-1">{post.date}</p>
                                 </div>
                             </Link>
                         );
                     })}
                 </div>
-            </div>
+            </SideWidget>
 
             {/* Tags */}
-            <div className="bg-white p-6" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.05)" }}>
-                <h4 className="text-lg font-serif font-bold text-gray-900 mb-5">Popular Tags</h4>
-                <div className="flex flex-wrap gap-2">
+            <SideWidget title="Popular Topics">
+                <div className="flex flex-wrap gap-1.5">
                     {topTags.map((tag) => (
-                        <span
-                            key={tag}
-                            className="text-[11px] border border-gray-100 text-gray-500 px-2.5 py-1 uppercase tracking-wider cursor-default hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors duration-200"
-                        >
+                        <span key={tag}
+                            style={{
+                                fontFamily: "'IM Fell English', serif",
+                                fontStyle: "italic",
+                                fontSize: "0.68rem",
+                                border: "1px solid #a09070",
+                                color: "#4a3f30",
+                                padding: "2px 7px",
+                                background: "rgba(255,255,255,0.3)",
+                                cursor: "default",
+                            }}>
                             {tag}
                         </span>
                     ))}
                 </div>
-            </div>
+            </SideWidget>
 
             {/* Newsletter */}
-            <div className="bg-gray-900 p-6 border-t-2 border-[#c9a84c]">
-                <h4 className="text-lg font-serif font-bold text-white mb-2">Stay Updated</h4>
-                <p className="text-white/50 text-xs leading-relaxed mb-5">
-                    Get the latest real estate insights, project launches, and investment tips delivered to you.
-                </p>
-                <input
-                    type="email"
-                    placeholder="Your email address"
-                    className="w-full bg-white/10 border border-white/15 text-white placeholder:text-white/30 text-sm px-4 py-2.5 outline-none focus:border-[#c9a84c] transition-colors duration-200 mb-3"
-                />
-                <button className="w-full bg-[#c9a84c] text-gray-900 text-xs font-bold uppercase tracking-wider py-2.5 hover:bg-[#b8962e] transition-colors duration-200">
-                    Subscribe →
-                </button>
+            <div className="clipping" style={{ background: "#1a1008", borderColor: "#c9a84c" }}>
+                <div className="p-5">
+                    <div style={{ borderBottom: "1px solid #c9a84c", marginBottom: "10px", paddingBottom: "8px" }}>
+                        <h4 className="np-headline-font" style={{ color: "#c9a84c", fontSize: "1rem", fontWeight: 900 }}>Subscribe to The Gazette</h4>
+                    </div>
+                    <p style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.78rem", color: "rgba(245,240,232,0.65)", lineHeight: 1.6, marginBottom: "12px" }}>
+                        Receive the latest real estate insights, project launches, and investment tips delivered to your door.
+                    </p>
+                    <input type="email" placeholder="Your email address" className="np-input mb-3"
+                        style={{ background: "rgba(255,255,255,0.08)", borderColor: "rgba(201,168,76,0.3)", color: "#f5f0e8" }} />
+                    <button className="w-full transition-colors hover:opacity-90"
+                        style={{ background: "#c9a84c", color: "#1a1008", fontFamily: "'Libre Baskerville', serif", fontWeight: 700, fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", padding: "10px" }}>
+                        Subscribe Now ✦
+                    </button>
+                </div>
             </div>
         </aside>
+    );
+}
+
+// ─── JUMP NAV ───────────────────────────────────────────────────────────────
+
+function JumpNav({ active, onScroll }: { active: string; onScroll: (id: string) => void }) {
+    return (
+        <div className="sticky top-0 sm:top-[72px] z-30" style={{ background: "#1a1008", borderBottom: "2px solid #c9a84c" }}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-8">
+                <div className="flex items-center justify-between overflow-x-auto">
+                    <button
+                        onClick={() => onScroll("articles")}
+                        className="flex items-center gap-2 py-3 px-4"
+                        style={{
+                            fontFamily: "'Libre Baskerville', serif",
+                            fontSize: "0.65rem",
+                            fontWeight: 700,
+                            letterSpacing: "0.2em",
+                            textTransform: "uppercase",
+                            color: active === "articles" ? "#c9a84c" : "rgba(245,240,232,0.6)",
+                            borderBottom: active === "articles" ? "2px solid #c9a84c" : "2px solid transparent",
+                        }}
+                    >
+                        Latest Articles
+                        <span style={{ background: "#c9a84c", color: "#1a1008", fontSize: "0.55rem", fontWeight: 900, padding: "1px 5px" }}>
+                            {BLOG_POSTS.length}
+                        </span>
+                    </button>
+                    <span style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.68rem", color: "rgba(245,240,232,0.4)" }} className="hidden sm:inline">
+                        {BLOG_POSTS.length} Editions Published
+                    </span>
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -562,131 +774,175 @@ export default function BlogPage() {
     };
 
     useEffect(() => {
-        const ids = ["articles"];
-        const observers = ids.map((id) => {
-            const el = document.getElementById(id);
-            if (!el) return null;
-            const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setActiveSection(id); }, { rootMargin: "-30% 0px -60% 0px" });
-            obs.observe(el);
-            return obs;
-        });
-        return () => observers.forEach((o) => o?.disconnect());
+        const el = document.getElementById("articles");
+        if (!el) return;
+        const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setActiveSection("articles"); }, { rootMargin: "-30% 0px -60% 0px" });
+        obs.observe(el);
+        return () => obs.disconnect();
     }, []);
 
     return (
         <LayoutWrapper>
-            <div className="bg-white min-h-screen">
+            {/* Inject newspaper CSS */}
+            <style dangerouslySetInnerHTML={{ __html: npStyles }} />
 
-                {/* ── HERO ─────────────────────────────────────────────────── */}
-                <section className="relative w-full bg-white border-b border-gray-100">
-                    <div className="max-w-7xl mx-auto px-6 lg:px-8 py-24 md:py-32">
-                        <div className="max-w-3xl">
-                            <nav className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gray-400 mb-8">
-                                <Link href="/" className="hover:text-[#c9a84c] transition-colors">Home</Link>
-                                <span className="text-gray-300">/</span>
-                                <span className="text-[#c9a84c]">Blog</span>
-                            </nav>
-                            <div className="text-xs uppercase tracking-[0.25em] font-semibold text-[#c9a84c] mb-4">SpaceAge Group · Vadodara</div>
-                            <h1 className="text-6xl md:text-7xl lg:text-8xl font-serif font-bold text-gray-900 leading-[1.1] mb-6">
-                                Insights &
-                                <br />
-                                <span className="italic text-[#c9a84c]">Perspectives.</span>
-                            </h1>
-                            <div className="w-12 h-px bg-[#c9a84c] mb-8" />
-                            <p className="text-gray-500 leading-relaxed text-lg max-w-xl">
-                                Expert analysis, market trends, and investment wisdom from the leaders at SpaceAge Group.
-                                Read the latest in Vadodara real estate.
-                            </p>
-                            <div className="flex flex-wrap gap-4 mt-10">
-                                <button onClick={() => scrollToSection("articles")} className="flex items-center gap-3 px-5 py-2.5 border border-gray-200 hover:border-[#c9a84c] transition-colors group">
-                                    <span className="text-xl font-bold text-gray-900 group-hover:text-[#c9a84c] transition-colors font-serif">{BLOG_POSTS.length}</span>
-                                    <span className="text-xs uppercase tracking-wider text-gray-400 group-hover:text-gray-600 transition-colors">Articles</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+            <div className="np-root">
+                {/* ── MASTHEAD ─────────────────────────────────────────────────── */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+                    <Masthead />
+                </div>
 
-                {/* ── JUMP NAV ──────────────────────────────────────────────── */}
+                {/* ── JUMP NAV ──────────────────────────────────────────────────── */}
                 <JumpNav active={activeSection} onScroll={scrollToSection} />
 
-                {/* ── FEATURED POST ─────────────────────────────────────────── */}
+                {/* ── HERO / PAGE TITLE ─────────────────────────────────────────── */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
+                    <div className="text-center pb-4" style={{ borderBottom: "3px double #2a1f10" }}>
+                        <nav className="flex items-center justify-center gap-2 mb-2" style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.7rem", color: "#6a5a48" }}>
+                            <Link href="/" className="hover:text-amber-700 transition-colors">Home</Link>
+                            <span>›</span>
+                            <span style={{ color: "#c9a84c" }}>Blog</span>
+                        </nav>
+                        <h2 className="np-headline-font" style={{ fontSize: "clamp(1.6rem, 4vw, 2.8rem)", fontWeight: 900, color: "#1a1008", lineHeight: 1.1 }}>
+                            Insights &amp; Perspectives
+                        </h2>
+                        <p style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.85rem", color: "#6a5a48", marginTop: "6px" }}>
+                            Expert analysis, market trends, and investment wisdom from the leaders at SpaceAge Group
+                        </p>
+                    </div>
+                </div>
+
+                {/* ── FEATURED POST ─────────────────────────────────────────────── */}
                 {featuredPost && activeCategory === "All" && !searchQuery && (
-                    <section className="bg-gray-900">
-                        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
-                            <div className="flex items-center justify-between mb-6">
-                                <span className="text-xs uppercase tracking-[0.22em] text-[#c9a84c] font-medium">Editor's Pick</span>
-                                <div className="h-px flex-1 bg-white/10 mx-6" />
-                            </div>
-                            <FeaturedCard post={featuredPost} />
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div style={{ borderTop: "1px solid #2a1f10", flex: 1 }} />
+                            <span style={{ fontFamily: "'Libre Baskerville', serif", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.25em", textTransform: "uppercase", color: "#1a1008" }}>
+                                ✦ Front Page Story ✦
+                            </span>
+                            <div style={{ borderTop: "1px solid #2a1f10", flex: 1 }} />
                         </div>
-                    </section>
+                        <FeaturedCard post={featuredPost} />
+                    </div>
                 )}
 
-                {/* ── ARTICLES SECTION ──────────────────────────────────────── */}
-                <section id="articles" className="py-24 bg-white" style={{ scrollMarginTop: "112px" }}>
-                    <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                        <SectionHeader number="01" label="Latest Stories" title="From the Blog" subtitle="Expert analysis, market trends, and investment wisdom from the leaders at SpaceAge Group." />
+                {/* ── MAIN CONTENT + SIDEBAR ────────────────────────────────────── */}
+                <section id="articles" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ scrollMarginTop: "80px" }}>
 
-                        {/* Category Filter */}
-                        <div className="flex flex-wrap gap-2 mb-12">
-                            {CATEGORIES.map((cat) => (
-                                <button
-                                    key={cat}
-                                    onClick={() => setActiveCategory(cat)}
-                                    className={`text-xs font-medium px-4 py-2 border transition-all duration-200 ${activeCategory === cat ? "bg-gray-900 border-gray-900 text-white" : "bg-white border-gray-200 text-gray-400 hover:text-gray-600"}`}
-                                >
-                                    {cat}
-                                    {cat !== "All" && <span className="ml-1.5 text-[10px] opacity-60">({BLOG_POSTS.filter((p) => p.category === cat).length})</span>}
-                                </button>
-                            ))}
-                            {searchQuery && (
-                                <button
-                                    onClick={() => setSearchQuery("")}
-                                    className="text-xs font-medium px-4 py-2 border border-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
-                                >
-                                    Clear Search ✕
-                                </button>
+                    {/* Section heading */}
+                    <div className="flex items-center gap-3 mb-6">
+                        <div style={{ borderTop: "3px solid #2a1f10", flex: 1 }} />
+                        <span className="np-headline-font" style={{ fontSize: "1rem", fontWeight: 900, color: "#1a1008", whiteSpace: "nowrap" }}>
+                            Latest Dispatches
+                        </span>
+                        <div style={{ borderTop: "3px solid #2a1f10", flex: 1 }} />
+                    </div>
+
+                    {/* Category filter – pill style on newsprint */}
+                    <div className="flex flex-wrap gap-2 mb-8">
+                        {CATEGORIES.map((cat) => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                style={{
+                                    fontFamily: "'Libre Baskerville', serif",
+                                    fontSize: "0.6rem",
+                                    fontWeight: 700,
+                                    letterSpacing: "0.18em",
+                                    textTransform: "uppercase",
+                                    padding: "5px 12px",
+                                    border: "1px solid #2a1f10",
+                                    background: activeCategory === cat ? "#1a1008" : "transparent",
+                                    color: activeCategory === cat ? "#f5f0e8" : "#2a1f10",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s",
+                                }}
+                            >
+                                {cat}
+                                {cat !== "All" && (
+                                    <span style={{ marginLeft: "5px", opacity: 0.6, fontSize: "0.55rem" }}>
+                                        ({BLOG_POSTS.filter((p) => p.category === cat).length})
+                                    </span>
+                                )}
+                            </button>
+                        ))}
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery("")}
+                                style={{
+                                    fontFamily: "'Libre Baskerville', serif",
+                                    fontSize: "0.6rem",
+                                    fontWeight: 700,
+                                    letterSpacing: "0.15em",
+                                    textTransform: "uppercase",
+                                    padding: "5px 12px",
+                                    border: "1px solid #a09070",
+                                    background: "transparent",
+                                    color: "#6a5a48",
+                                    cursor: "pointer",
+                                }}
+                            >
+                                Clear ✕
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Two-column layout: articles + sidebar */}
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] xl:grid-cols-[1fr_300px] gap-8 lg:gap-10">
+
+                        {/* Articles grid */}
+                        <div>
+                            {filtered.length === 0 ? (
+                                <div className="clipping text-center py-16" style={{ background: "#f5f0e8" }}>
+                                    <p className="np-headline-font" style={{ fontSize: "1.2rem", color: "#6a5a48" }}>No stories found</p>
+                                    <p style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.8rem", color: "#a09070", marginTop: "6px" }}>
+                                        Try a different section or search term.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                                    {filtered.map((post, idx) => (
+                                        <BlogCard key={post.id} post={post} index={idx} />
+                                    ))}
+                                </div>
                             )}
                         </div>
 
-                        {filtered.length === 0 ? (
-                            <div className="text-center py-20 bg-gray-50">
-                                <svg className="mx-auto mb-4 text-gray-300" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                    <circle cx="11" cy="11" r="8" />
-                                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                                </svg>
-                                <p className="text-sm text-gray-400">No articles found. Try a different category or search term.</p>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filtered.map((post, idx) => (
-                                    <BlogCard key={post.id} post={post} index={idx} />
-                                ))}
-                            </div>
-                        )}
+                        {/* Sidebar */}
+                        <div className="lg:border-l lg:pl-8" style={{ borderColor: "#2a1f10" }}>
+                            <Sidebar
+                                posts={BLOG_POSTS}
+                                activeCategory={activeCategory}
+                                onCategory={setActiveCategory}
+                                searchQuery={searchQuery}
+                                onSearch={setSearchQuery}
+                            />
+                        </div>
                     </div>
                 </section>
 
-                {/* ── CTA BANNER ────────────────────────────────────────────── */}
-                <section className="bg-gray-900 border-t border-[#c9a84c] py-20">
-                    <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-col lg:flex-row items-center justify-between gap-10">
-                        <div>
-                            <span className="text-[10px] uppercase tracking-[0.25em] text-[#c9a84c] font-semibold block mb-3">Have a Question?</span>
-                            <h2 className="text-white leading-tight text-2xl md:text-3xl font-serif font-bold">
+                {/* ── CTA BANNER ────────────────────────────────────────────────── */}
+                <section style={{ background: "#1a1008", borderTop: "3px solid #c9a84c", borderBottom: "3px solid #c9a84c" }} className="py-16">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center justify-between gap-8">
+                        <div className="text-center lg:text-left">
+                            <div style={{ fontFamily: "'Libre Baskerville', serif", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase", color: "#c9a84c", marginBottom: "8px" }}>
+                                ✦ Have a Question? ✦
+                            </div>
+                            <h2 className="np-headline-font" style={{ color: "#f5f0e8", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 900, lineHeight: 1.2 }}>
                                 Ready to Find Your Perfect Property?
                                 <br />
-                                <span className="italic text-[#c9a84c]">Let's talk.</span>
+                                <span style={{ fontStyle: "italic", color: "#c9a84c" }}>Let's talk.</span>
                             </h2>
                         </div>
                         <div className="flex flex-wrap gap-4 shrink-0">
-                            <Link href="/contact" className="inline-flex items-center gap-2 text-sm font-semibold px-7 py-4 bg-[#c9a84c] text-gray-900 hover:bg-[#b8962e] transition-colors">
-                                Talk to Our Experts
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                </svg>
+                            <Link href="/contact"
+                                className="inline-flex items-center gap-2 transition-colors hover:opacity-90"
+                                style={{ background: "#c9a84c", color: "#1a1008", fontFamily: "'Libre Baskerville', serif", fontWeight: 700, fontSize: "0.7rem", letterSpacing: "0.15em", textTransform: "uppercase", padding: "14px 28px" }}>
+                                Talk to Our Experts →
                             </Link>
-                            <Link href="/projects" className="inline-flex items-center gap-2 text-sm font-medium px-7 py-4 border border-gray-700 text-white hover:border-gray-500 transition-colors">
+                            <Link href="/projects"
+                                className="inline-flex items-center gap-2 transition-colors"
+                                style={{ background: "transparent", color: "#f5f0e8", fontFamily: "'Libre Baskerville', serif", fontWeight: 400, fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase", padding: "14px 28px", border: "1px solid rgba(245,240,232,0.25)" }}>
                                 Explore Projects
                             </Link>
                         </div>

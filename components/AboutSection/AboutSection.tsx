@@ -6,10 +6,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 const STATS = [
-  { value: "25+", label: "Years of Excellence" },
+  { value: "35+", label: "Years of Excellence" },
   { value: "120+", label: "Projects Completed" },
   { value: "3000+", label: "Happy Families" },
-  { value: "4", label: "Expert Directors" },
+  { value: "15", label: "Expert Directors" },
 ];
 
 export default function AboutSection() {
@@ -68,7 +68,7 @@ export default function AboutSection() {
             <div className="mt-6 space-y-4 text-base text-[#5a5a5a] leading-relaxed">
               <p>
                 For over two decades, SpaceAge Group has been synonymous with excellence
-                in real estate development across Vadodara.
+                in real estate development across Gujarat.
               </p>
               <p>
                 Our journey is defined by an unwavering commitment to quality, innovation,

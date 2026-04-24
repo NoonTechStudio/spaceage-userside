@@ -72,7 +72,7 @@ const LEADERSHIP = [
   },
 ];
 
-const STAT_TARGETS = [32, 120, 3000, 98];
+const STAT_TARGETS = [35, 120, 5000, 98];
 const STAT_SUFFIXES = ["+", "+", "+", "%"];
 const STAT_LABELS = ["Years of Excellence", "Projects Completed", "Happy Families", "Client Satisfaction"];
 
@@ -158,7 +158,7 @@ export default function AboutPage() {
               <h1 className="text-6xl md:text-7xl lg:text-8xl font-serif font-bold text-gray-900 leading-[1.1] mb-6">
                 Crafting Vadodara's
                 <br />
-                <span className="italic text-[#c9a84c]">Skyline Since 1992</span>
+                <span className="italic text-[#c9a84c]">Skyline Since 1990</span>
               </h1>
               <div className="w-12 h-px bg-[#c9a84c] mb-8" />
               <p className="text-gray-500 leading-relaxed text-lg max-w-xl">
@@ -199,7 +199,7 @@ export default function AboutPage() {
                   <h2 className="text-5xl lg:text-6xl font-serif font-bold text-gray-900 leading-tight">
                     Building Dreams
                     <br />
-                    Since 1992
+                    Since 1990
                   </h2>
                   <div className="w-12 h-px bg-[#c9a84c] my-6" />
                   <div className="space-y-4 text-base text-gray-500 leading-relaxed">
@@ -215,7 +215,7 @@ export default function AboutPage() {
                       to excellence.
                     </p>
                     <p>
-                      Today, with over 120 successful projects and 3000+ happy families,
+                      Today, with over 120 successful projects and 5000+ happy families,
                       we continue to push boundaries and set new standards in real estate development.
                     </p>
                   </div>

@@ -6,9 +6,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 const SLIDES = [
-  { src: "/images/img1.jpg", alt: "Luxury residential architecture", title: "Premium Living" },
-  { src: "/images/img2.jpg", alt: "Modern commercial spaces", title: "Commercial Excellence" },
-  { src: "/images/img3.jpg", alt: "Sustainable developments", title: "Eco-Conscious Design" },
+  { src: "/images/hero1.jpg", alt: "Luxury residential architecture", title: "Premium Living" },
+  { src: "/images/Hero2.jpg", alt: "Modern commercial spaces", title: "Commercial Excellence" },
+  { src: "/images/Hero3.jpg", alt: "Sustainable developments", title: "Eco-Conscious Design" },
 ];
 
 export default function HeroSection() {
