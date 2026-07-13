@@ -3,9 +3,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import LayoutWrapper from "@/components/LayoutWrapper/LayoutWrapper";
 import Footer from "@/components/Footer/Footer";
+import DevDataToggle from "@/components/DevDataToggle/DevDataToggle";
 
 // ─── Data ───────────────────────────────────────────────────────────────────
 
@@ -98,11 +99,134 @@ function RevealSection({ children, delay = 0, className = "" }: { children: Reac
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
+interface DBTeamMember {
+  _id: string;
+  name: string;
+  position: string;
+  study: string;
+  experience: string;
+  description: string;
+  relationToGroup: string;
+  image: {
+    url: string;
+    cloudinaryId: string;
+  };
+  taglineThought?: string;
+  skills?: string[];
+}
+
+interface SiteSettings {
+  yearsOfExcellence: string;
+  projectsCompleted: string;
+  happyFamilies: string;
+  clientSatisfaction: string;
+}
+
+interface DBTimelineEvent {
+  _id: string;
+  year: string;
+  title: string;
+  description: string;
+  order: number;
+}
+
 export default function AboutPage() {
   const [activeTab, setActiveTab] = useState<"story" | "mission" | "vision">("story");
   const [counted, setCounted] = useState(false);
   const [displayCounts, setDisplayCounts] = useState([0, 0, 0, 0]);
   const statsRef = useRef<HTMLDivElement>(null);
+
+  const [useMock, setUseMock] = useState(false);
+  const [team, setTeam] = useState<DBTeamMember[]>([]);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [timeline, setTimeline] = useState<DBTimelineEvent[]>([]);
+
+  useEffect(() => {
+    setUseMock(localStorage.getItem("use_mock_data") === "true");
+    
+    const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+    
+    // Fetch team
+    fetch(`${adminApiUrl}/api/team`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) setTeam(data);
+      })
+      .catch(err => {
+        console.warn("Failed to fetch team data from admin API:", err.message);
+      });
+      
+    // Fetch settings
+    fetch(`${adminApiUrl}/api/settings`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (data && !data.error) setSettings(data);
+      })
+      .catch(err => {
+        console.warn("Failed to fetch settings from admin API:", err.message);
+      });
+
+    // Fetch timeline
+    fetch(`${adminApiUrl}/api/timeline`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) setTimeline(data);
+      })
+      .catch(err => {
+        console.warn("Failed to fetch timeline milestones from admin API:", err.message);
+      });
+  }, []);
+
+  const targets = useMemo(() => {
+    return !useMock && settings ? [
+      parseInt(settings.yearsOfExcellence.replace(/[^0-9]/g, '')) || 0,
+      parseInt(settings.projectsCompleted.replace(/[^0-9]/g, '')) || 0,
+      parseInt(settings.happyFamilies.replace(/[^0-9]/g, '')) || 0,
+      parseInt(settings.clientSatisfaction.replace(/[^0-9]/g, '')) || 0,
+    ] : STAT_TARGETS;
+  }, [useMock, settings]);
+
+  const suffixes = useMemo(() => {
+    return !useMock && settings ? [
+      settings.yearsOfExcellence.replace(/[0-9]/g, '') || "",
+      settings.projectsCompleted.replace(/[0-9]/g, '') || "",
+      settings.happyFamilies.replace(/[0-9]/g, '') || "",
+      settings.clientSatisfaction.replace(/[0-9]/g, '') || "",
+    ] : STAT_SUFFIXES;
+  }, [useMock, settings]);
+
+  const activeTeam = useMemo(() => {
+    return !useMock && team && team.length > 0 ? team.map(member => {
+      const bioLine = member.description ? member.description.split("\n")[0].trim() : "";
+      const cleanBio = bioLine.length > 80 ? bioLine.substring(0, 80) + "..." : bioLine;
+      const hasSkills = Array.isArray(member.skills) && member.skills.length > 0;
+
+      return {
+        name: member.name,
+        role: member.position,
+        image: member.image?.url || "/images/team-placeholder.jpg",
+        quote: member.taglineThought || cleanBio,
+        expertise: hasSkills ? member.skills : [member.relationToGroup, member.experience, member.study].filter(Boolean),
+      };
+    }) : LEADERSHIP;
+  }, [useMock, team]);
+
+  const activeTimeline = useMemo(() => {
+    return !useMock && timeline && timeline.length > 0 ? timeline.map(event => ({
+      year: event.year,
+      title: event.title,
+      description: event.description,
+    })) : TIMELINE;
+  }, [useMock, timeline]);
 
   // Count-up on scroll into view
   useEffect(() => {
@@ -128,14 +252,14 @@ export default function AboutPage() {
       step++;
       const progress = step / steps;
       const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplayCounts(STAT_TARGETS.map((t) => Math.round(t * eased)));
+      setDisplayCounts(targets.map((t) => Math.round(t * eased)));
       if (step >= steps) {
-        setDisplayCounts(STAT_TARGETS);
+        setDisplayCounts(targets);
         clearInterval(timer);
       }
     }, stepTime);
     return () => clearInterval(timer);
-  }, [counted]);
+  }, [counted, targets]);
 
   return (
     <LayoutWrapper>
@@ -351,7 +475,7 @@ export default function AboutPage() {
                 >
                   <div className="text-5xl font-bold text-gray-900 font-serif">
                     {displayCounts[idx]}
-                    {STAT_SUFFIXES[idx]}
+                    {suffixes[idx]}
                   </div>
                   <div className="text-xs uppercase tracking-[0.2em] text-gray-400 mt-3 font-medium">
                     {STAT_LABELS[idx]}
@@ -379,7 +503,7 @@ export default function AboutPage() {
             <div className="hidden md:block relative">
               <div className="absolute left-1/2 -translate-x-px top-0 bottom-0 w-px bg-gray-200" />
               <div className="space-y-16">
-                {TIMELINE.map((item, idx) => (
+                {activeTimeline.map((item, idx) => (
                   <div
                     key={idx}
                     className={`relative flex items-start ${idx % 2 === 0 ? "flex-row" : "flex-row-reverse"}`}
@@ -415,7 +539,7 @@ export default function AboutPage() {
             <div className="md:hidden relative pl-8">
               <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200" />
               <div className="space-y-10">
-                {TIMELINE.map((item, idx) => (
+                {activeTimeline.map((item, idx) => (
                   <div key={idx} className="relative">
                     <div className="absolute -left-5 top-1.5 w-2.5 h-2.5 bg-[#c9a84c] rounded-full" />
                     <div className="text-2xl font-bold text-[#c9a84c] mb-1 font-serif">{item.year}</div>
@@ -446,7 +570,7 @@ export default function AboutPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {LEADERSHIP.map((leader, idx) => (
+              {activeTeam.map((leader, idx) => (
                 <RevealSection key={idx} delay={idx * 100}>
                   <div className="group flex flex-col sm:flex-row bg-white border border-gray-100 transition-all duration-300 hover:shadow-lg">
                     <div className="w-full sm:w-48 shrink-0 overflow-hidden bg-gray-100">
@@ -472,7 +596,7 @@ export default function AboutPage() {
                           "{leader.quote}"
                         </p>
                         <div className="flex flex-wrap gap-3 mt-3">
-                          {leader.expertise.map((exp, i) => (
+                          {leader.expertise?.map((exp, i) => (
                             <span key={i} className="text-xs text-gray-400">
                               · {exp}
                             </span>
@@ -532,6 +656,7 @@ export default function AboutPage() {
 
         <Footer />
       </div>
+      <DevDataToggle />
     </LayoutWrapper>
   );
 }

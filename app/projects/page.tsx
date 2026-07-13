@@ -1,11 +1,12 @@
 // app/projects/page.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import LayoutWrapper from "@/components/LayoutWrapper/LayoutWrapper";
 import Footer from "@/components/Footer/Footer";
+import DevDataToggle from "@/components/DevDataToggle/DevDataToggle";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -13,7 +14,7 @@ type Filter = "All" | "Residential" | "Commercial" | "Township" | "Luxury";
 type Status = "Completed" | "Ongoing" | "Upcoming";
 
 interface Project {
-  id: number;
+  id: number | string;
   slug: string;
   name: string;
   subtitle: string;
@@ -23,7 +24,7 @@ interface Project {
   status: Status;
   year: string;
   area: string;
-  units: number;
+  units: number | string;
   featured?: boolean;
 }
 
@@ -160,16 +161,16 @@ const STATUS_COLORS = {
   Upcoming: "bg-gray-50 text-gray-500 border-gray-100",
 };
 
-const LOCATION_PINS = [
-  { id: 1, name: "Space Age Residency", location: "Alkapuri", top: "38%", left: "42%" },
-  { id: 2, name: "Siddhi Heights", location: "Alkapuri", top: "42%", left: "44%" },
-  { id: 3, name: "Space Age Commerce", location: "Manjalpur", top: "58%", left: "52%" },
-  { id: 4, name: "Greenwood Township", location: "Waghodia Rd", top: "62%", left: "68%" },
-  { id: 5, name: "The Crown Residences", location: "Akota", top: "45%", left: "36%" },
-  { id: 6, name: "Riverside Villas", location: "Vishwamitri", top: "34%", left: "50%" },
-  { id: 7, name: "Space Age Business Park", location: "Gotri", top: "28%", left: "44%" },
-  { id: 8, name: "Palm Grove Enclave", location: "New VIP Road", top: "22%", left: "55%" },
-  { id: 9, name: "Space Age Retail Hub", location: "Manjalpur", top: "60%", left: "54%" },
+const COORDINATES = [
+  { top: "38%", left: "42%" },
+  { top: "42%", left: "44%" },
+  { top: "58%", left: "52%" },
+  { top: "62%", left: "68%" },
+  { top: "45%", left: "36%" },
+  { top: "34%", left: "50%" },
+  { top: "28%", left: "44%" },
+  { top: "22%", left: "55%" },
+  { top: "60%", left: "54%" },
 ];
 
 // ─── Components ─────────────────────────────────────────────────────────────
@@ -252,14 +253,83 @@ function ProjectCard({ project, featured = false }: { project: Project; index: n
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+interface DBProject {
+  _id: string;
+  title: string;
+  slug: string;
+  headline?: string;
+  status: 'upcoming' | 'ongoing' | 'completed';
+  address?: string;
+  estYear?: string;
+  featured?: boolean;
+  category?: string;
+  shortIntro?: string;
+  heroImages?: {
+    url: string;
+    cloudinaryId?: string;
+    isMainImage?: boolean;
+  }[];
+}
+
 export default function ProjectsPage() {
   const [activeFilter, setActiveFilter] = useState<Filter>("All");
   const [selectedStatus, setSelectedStatus] = useState<Status | "All">("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [activeLocation, setActiveLocation] = useState<number | null>(null);
+  const [activeLocation, setActiveLocation] = useState<number | string | null>(null);
 
-  const filteredProjects = PROJECTS.filter((project) => {
+  const [useMock, setUseMock] = useState(false);
+  const [projects, setProjects] = useState<DBProject[]>([]);
+
+  useEffect(() => {
+    setUseMock(localStorage.getItem("use_mock_data") === "true");
+
+    const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+    fetch(`${adminApiUrl}/api/projects`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) setProjects(data);
+      })
+      .catch(err => {
+        console.warn("Failed to fetch projects list from admin API:", err.message);
+      });
+  }, []);
+
+  const activeProjects = useMemo(() => {
+    if (useMock || !projects || projects.length === 0) {
+      return PROJECTS;
+    }
+    
+    return projects.map((p) => {
+      let statusLabel: "Completed" | "Ongoing" | "Upcoming" = "Upcoming";
+      if (p.status === "completed") statusLabel = "Completed";
+      if (p.status === "ongoing") statusLabel = "Ongoing";
+      
+      const mainImg = p.heroImages?.find(img => img.isMainImage)?.url || p.heroImages?.[0]?.url || "/images/project-1.jpg";
+      const area = (p as any).area || "TBD";
+      const units = (p as any).units || "TBD";
+
+      return {
+        id: p._id,
+        slug: p.slug,
+        name: p.title,
+        subtitle: p.shortIntro || p.headline || "",
+        category: (p.category || "Residential") as Filter,
+        location: p.address || "",
+        image: mainImg,
+        status: statusLabel,
+        year: p.estYear || "",
+        area: area,
+        units: units,
+        featured: p.featured,
+      };
+    });
+  }, [useMock, projects]);
+
+  const filteredProjects = activeProjects.filter((project) => {
     const matchesFilter = activeFilter === "All" || project.category === activeFilter;
     const matchesStatus = selectedStatus === "All" || project.status === selectedStatus;
     const matchesSearch =
@@ -268,12 +338,12 @@ export default function ProjectsPage() {
     return matchesFilter && matchesStatus && matchesSearch;
   });
 
-  const featuredProjects = PROJECTS.filter((p) => p.featured);
+  const featuredProjects = activeProjects.filter((p) => p.featured);
   const stats = {
-    total: PROJECTS.length,
-    residential: PROJECTS.filter((p) => p.category === "Residential").length,
-    commercial: PROJECTS.filter((p) => p.category === "Commercial").length,
-    luxury: PROJECTS.filter((p) => p.category === "Luxury").length,
+    total: activeProjects.length,
+    residential: activeProjects.filter((p) => p.category === "Residential").length,
+    commercial: activeProjects.filter((p) => p.category === "Commercial").length,
+    luxury: activeProjects.filter((p) => p.category === "Luxury").length,
   };
 
   const isFiltered = activeFilter !== "All" || selectedStatus !== "All" || searchQuery !== "";
@@ -281,6 +351,20 @@ export default function ProjectsPage() {
   const remainingProjects = isFiltered
     ? filteredProjects
     : filteredProjects.filter((p) => p.id !== featuredCard?.id);
+
+  const activePins = useMemo(() => {
+    return activeProjects.slice(0, COORDINATES.length).map((project, idx) => {
+      const coord = COORDINATES[idx];
+      return {
+        id: project.id,
+        name: project.name,
+        location: project.location || "Vadodara",
+        top: coord.top,
+        left: coord.left,
+        category: project.category,
+      };
+    });
+  }, [activeProjects]);
 
   return (
     <LayoutWrapper>
@@ -494,7 +578,7 @@ export default function ProjectsPage() {
                     Vadodara, Gujarat
                   </span>
                 </div>
-                {LOCATION_PINS.map((pin) => (
+                {activePins.map((pin) => (
                   <button
                     key={pin.id}
                     onClick={() => setActiveLocation(activeLocation === pin.id ? null : pin.id)}
@@ -503,16 +587,16 @@ export default function ProjectsPage() {
                     aria-label={pin.name}
                   >
                     <div
-                      className="transition-all duration-200"
-                      style={{
-                        width: activeLocation === pin.id ? "12px" : "8px",
-                        height: activeLocation === pin.id ? "12px" : "8px",
-                        borderRadius: "50%",
-                        backgroundColor: activeLocation === pin.id ? "#1a1a1a" : "#c9a84c",
-                        boxShadow: activeLocation === pin.id
-                          ? "0 0 0 3px rgba(26,26,26,0.1)"
-                          : "0 0 0 2px rgba(201,168,76,0.2)",
-                      }}
+                       className="transition-all duration-200"
+                       style={{
+                         width: activeLocation === pin.id ? "12px" : "8px",
+                         height: activeLocation === pin.id ? "12px" : "8px",
+                         borderRadius: "50%",
+                         backgroundColor: activeLocation === pin.id ? "#1a1a1a" : "#c9a84c",
+                         boxShadow: activeLocation === pin.id
+                           ? "0 0 0 3px rgba(26,26,26,0.1)"
+                           : "0 0 0 2px rgba(201,168,76,0.2)",
+                       }}
                     />
                     {activeLocation === pin.id && (
                       <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-medium px-2 py-1 whitespace-nowrap">
@@ -533,8 +617,8 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              <div className="bg-white overflow-y-auto max-h-[500px]">
-                {LOCATION_PINS.map((pin, idx) => (
+               <div className="bg-white overflow-y-auto max-h-[500px]">
+                {activePins.map((pin, idx) => (
                   <button
                     key={pin.id}
                     onClick={() => setActiveLocation(activeLocation === pin.id ? null : pin.id)}
@@ -548,7 +632,7 @@ export default function ProjectsPage() {
                       <p className="text-sm font-semibold text-gray-900">{pin.name}</p>
                       <p className="text-xs text-gray-400 mt-0.5">{pin.location}</p>
                       <p className="text-xs text-[#c9a84c] uppercase tracking-wider mt-1">
-                        {PROJECTS.find((p) => p.id === pin.id)?.category}
+                        {pin.category}
                       </p>
                     </div>
                   </button>
@@ -590,6 +674,7 @@ export default function ProjectsPage() {
 
         <Footer />
       </div>
+      <DevDataToggle />
     </LayoutWrapper>
   );
 }

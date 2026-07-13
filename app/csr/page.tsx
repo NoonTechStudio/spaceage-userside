@@ -1,11 +1,12 @@
 // app/csr/page.tsx
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import LayoutWrapper from "@/components/LayoutWrapper/LayoutWrapper";
 import Footer from "@/components/Footer/Footer";
+import DevDataToggle from "@/components/DevDataToggle/DevDataToggle";
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -13,10 +14,17 @@ function coverSrc(images: string[]): string | null {
     return images.find((s) => s && s.trim() !== "") ?? null;
 }
 
+const getYoutubeId = (url: string) => {
+    if (!url) return "dQw4w9WgXcQ";
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : "dQw4w9WgXcQ";
+};
+
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
 interface CSRPost {
-    id: number;
+    id: string | number;
     slug: string;
     title: string;
     category: string;
@@ -28,6 +36,13 @@ interface CSRPost {
     impact: string;
     likes: number;
     color: string;
+    items?: {
+        url: string;
+        title?: string;
+        description?: string;
+        category?: string;
+        provider?: string;
+    }[];
 }
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
@@ -219,12 +234,17 @@ function SectionHeader({ number, label, title, subtitle }: { number: string; lab
 
 // ─── LIKE BUTTON ────────────────────────────────────────────────────────────
 
-function LikeButton({ postId, initialLikes }: { postId: number; initialLikes: number }) {
+function LikeButton({ postId, initialLikes, useMock }: { postId: string | number; initialLikes: number; useMock: boolean }) {
     const [liked, setLiked] = useState(false);
     const [count, setCount] = useState(initialLikes);
     const [animating, setAnimating] = useState(false);
 
-    const handleLike = (e: React.MouseEvent) => {
+    // Sync count when initialLikes changes
+    useEffect(() => {
+        setCount(initialLikes);
+    }, [initialLikes]);
+
+    const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (liked) {
             setLiked(false);
@@ -234,6 +254,18 @@ function LikeButton({ postId, initialLikes }: { postId: number; initialLikes: nu
             setCount((c) => c + 1);
             setAnimating(true);
             setTimeout(() => setAnimating(false), 600);
+
+            if (!useMock) {
+                try {
+                    await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/csr/${postId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'like' }),
+                    });
+                } catch (err) {
+                    console.error("Failed to update like in db:", err);
+                }
+            }
         }
     };
 
@@ -276,7 +308,7 @@ function LikeButton({ postId, initialLikes }: { postId: number; initialLikes: nu
 
 // ─── IMAGE GALLERY MODAL ────────────────────────────────────────────────────
 
-function GalleryModal({ post, onClose }: { post: CSRPost; onClose: () => void }) {
+function GalleryModal({ post, onClose, useMock }: { post: CSRPost; onClose: () => void; useMock: boolean }) {
     const [current, setCurrent] = useState(0);
 
     useEffect(() => {
@@ -294,6 +326,7 @@ function GalleryModal({ post, onClose }: { post: CSRPost; onClose: () => void })
     }, [onClose, post.images.length]);
 
     const hasImages = post.images.length > 0 && post.images[0]?.trim();
+    const currentItem = post.items && post.items[current];
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95" onClick={onClose}>
@@ -307,14 +340,34 @@ function GalleryModal({ post, onClose }: { post: CSRPost; onClose: () => void })
                     Close <span className="text-base">✕</span>
                 </button>
 
-                <div className="relative bg-gray-100 flex items-center justify-center" style={{ minHeight: "400px", aspectRatio: "16/9" }}>
+                <div className="relative bg-gray-100 flex items-center justify-center overflow-hidden" style={{ minHeight: "400px", aspectRatio: "16/9" }}>
                     {hasImages ? (
-                        <Image
-                            src={post.images[current]}
-                            alt={post.title}
-                            fill
-                            className="object-contain"
-                        />
+                        currentItem && (currentItem.category === 'video' || currentItem.provider === 'youtube') ? (
+                            currentItem.provider === 'youtube' ? (
+                                <iframe 
+                                    className="absolute inset-0 w-full h-full p-4 md:p-8" 
+                                    src={`https://www.youtube.com/embed/${getYoutubeId(currentItem.url)}?autoplay=1&rel=0`} 
+                                    title={currentItem.title || post.title} 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowFullScreen 
+                                />
+                            ) : (
+                                <video 
+                                    className="absolute inset-0 w-full h-full p-4 md:p-8" 
+                                    src={currentItem.url} 
+                                    controls 
+                                    autoPlay 
+                                    playsInline
+                                />
+                            )
+                        ) : (
+                            <Image
+                                src={post.images[current]}
+                                alt={post.title}
+                                fill
+                                className="object-contain"
+                            />
+                        )
                     ) : (
                         <div className="flex flex-col items-center justify-center text-gray-400">
                             <svg className="w-12 h-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
@@ -330,7 +383,7 @@ function GalleryModal({ post, onClose }: { post: CSRPost; onClose: () => void })
                         <>
                             <button
                                 onClick={() => setCurrent((c) => (c - 1 + post.images.length) % post.images.length)}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+                                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 flex items-center justify-center hover:bg-white transition-colors z-10"
                             >
                                 <svg className="w-5 h-5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -338,37 +391,46 @@ function GalleryModal({ post, onClose }: { post: CSRPost; onClose: () => void })
                             </button>
                             <button
                                 onClick={() => setCurrent((c) => (c + 1) % post.images.length)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 flex items-center justify-center hover:bg-white transition-colors"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 flex items-center justify-center hover:bg-white transition-colors z-10"
                             >
                                 <svg className="w-5 h-5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                                 </svg>
                             </button>
-                            <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-3 py-1">
+                            <div className="absolute bottom-4 right-4 bg-black/60 text-white text-xs px-3 py-1 z-10">
                                 {current + 1} / {post.imageCount}
                             </div>
                         </>
                     )}
                 </div>
 
-                <div className="p-6 bg-white">
-                    <div className="flex items-start justify-between">
-                        <div>
+                <div className="p-6 bg-white border-t border-gray-100">
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
                             <span className="text-[10px] uppercase tracking-[0.2em] text-[#c9a84c] font-semibold block mb-1">
                                 {post.category} · {post.date}
                             </span>
-                            <h3 className="text-xl font-serif font-bold text-gray-900">{post.title}</h3>
+                            <h3 className="text-xl font-serif font-bold text-gray-900 truncate">
+                                {post.title}
+                            </h3>
+                            {currentItem && currentItem.title && (
+                                <h4 className="text-sm font-bold text-gray-800 mt-2 block">
+                                    Asset: {currentItem.title}
+                                </h4>
+                            )}
+                            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+                                {currentItem && currentItem.description ? currentItem.description : post.longDescription}
+                            </p>
                         </div>
                         <span
-                            className="text-xs font-medium px-3 py-1.5 border"
+                            className="text-xs font-medium px-3 py-1.5 border shrink-0"
                             style={{ color: post.color, borderColor: post.color + "40" }}
                         >
                             {post.impact}
                         </span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-4 leading-relaxed">{post.longDescription}</p>
                     <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end">
-                        <LikeButton postId={post.id} initialLikes={post.likes} />
+                        <LikeButton postId={post.id} initialLikes={post.likes} useMock={useMock} />
                     </div>
                 </div>
             </div>
@@ -378,14 +440,14 @@ function GalleryModal({ post, onClose }: { post: CSRPost; onClose: () => void })
 
 // ─── CSR CARD ───────────────────────────────────────────────────────────────
 
-function CSRCard({ post, index }: { post: CSRPost; index: number }) {
+function CSRCard({ post, index, useMock }: { post: CSRPost; index: number; useMock: boolean }) {
     const [expanded, setExpanded] = useState(false);
     const [showGallery, setShowGallery] = useState(false);
     const isFeature = index === 0;
 
     return (
         <>
-            {showGallery && <GalleryModal post={post} onClose={() => setShowGallery(false)} />}
+            {showGallery && <GalleryModal post={post} onClose={() => setShowGallery(false)} useMock={useMock} />}
 
             <RevealSection delay={index * 70}>
                 <article
@@ -465,7 +527,7 @@ function CSRCard({ post, index }: { post: CSRPost; index: number }) {
                         </button>
 
                         <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                            <LikeButton postId={post.id} initialLikes={post.likes} />
+                            <LikeButton postId={post.id} initialLikes={post.likes} useMock={useMock} />
                             <span className="text-xs text-gray-400 hover:text-[#c9a84c] transition-colors flex items-center gap-1.5 uppercase tracking-wider font-medium">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -484,9 +546,9 @@ function CSRCard({ post, index }: { post: CSRPost; index: number }) {
 
 // ─── JUMP NAV ───────────────────────────────────────────────────────────────
 
-function JumpNav({ active, onScroll }: { active: string; onScroll: (id: string) => void }) {
+function JumpNav({ active, onScroll, count }: { active: string; onScroll: (id: string) => void; count: number }) {
     const sections = [
-        { id: "initiatives", label: "Initiatives", count: CSR_POSTS.length },
+        { id: "initiatives", label: "Initiatives", count: count },
     ];
 
     return (
@@ -506,7 +568,7 @@ function JumpNav({ active, onScroll }: { active: string; onScroll: (id: string) 
                             </span>
                         </button>
                     ))}
-                    <span className="ml-auto text-xs text-gray-400 whitespace-nowrap">{CSR_POSTS.length} Total Initiatives</span>
+                    <span className="ml-auto text-xs text-gray-400 whitespace-nowrap">{count} Total Initiatives</span>
                 </div>
             </div>
         </div>
@@ -516,20 +578,72 @@ function JumpNav({ active, onScroll }: { active: string; onScroll: (id: string) 
 // ─── MAIN PAGE ──────────────────────────────────────────────────────────────
 
 export default function CSRPage() {
+    const [useMock, setUseMock] = useState(true);
+    const [csrList, setCsrList] = useState<any[]>([]);
+
     const [activeCategory, setActiveCategory] = useState("All");
     const [activeSection, setActiveSection] = useState("initiatives");
 
-    const uniqueCategories = ["All", ...Array.from(new Set(CSR_POSTS.map((p) => p.category)))];
+    useEffect(() => {
+        const stored = localStorage.getItem("dev_use_mock_data");
+        if (stored !== null) {
+            setUseMock(stored === "true");
+        }
+
+        const handleToggle = (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            setUseMock(detail.useMock);
+        };
+        window.addEventListener("devDataToggle", handleToggle);
+
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/csr`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setCsrList(data);
+            })
+            .catch(console.error);
+
+        return () => {
+            window.removeEventListener("devDataToggle", handleToggle);
+        };
+    }, []);
+
+    const activePosts = useMemo<CSRPost[]>(() => {
+        if (useMock || !csrList || csrList.length === 0) return CSR_POSTS;
+
+        return csrList.map((item) => {
+            const mappedImages = Array.isArray(item.items) && item.items.length > 0 
+                ? item.items.map((x: any) => x.url) 
+                : (Array.isArray(item.images) && item.images.length > 0 ? item.images : ["/images/csr/placeholder.jpg"]);
+            return {
+                id: item._id,
+                slug: item.slug,
+                title: item.title,
+                category: item.category,
+                date: item.date,
+                description: item.description,
+                longDescription: item.longDescription,
+                images: mappedImages,
+                imageCount: mappedImages.length,
+                impact: item.impact,
+                likes: item.likes || 0,
+                color: item.color || "#c9a84c",
+                items: item.items || [],
+            };
+        });
+    }, [useMock, csrList]);
+
+    const uniqueCategories = ["All", ...Array.from(new Set(activePosts.map((p) => p.category)))];
 
     const filtered = activeCategory === "All"
-        ? CSR_POSTS
-        : CSR_POSTS.filter((p) => p.category === activeCategory);
+        ? activePosts
+        : activePosts.filter((p) => p.category === activeCategory);
 
     const totalImpact = {
         children: "50+",
         trees: "1000+",
         families: "500+",
-        events: CSR_POSTS.length,
+        events: activePosts.length,
     };
 
     const scrollToSection = (id: string) => {
@@ -569,56 +683,70 @@ export default function CSRPage() {
                                 <span className="italic text-[#c9a84c]">Social Responsibility.</span>
                             </h1>
                             <div className="w-12 h-px bg-[#c9a84c] mb-8" />
-                            <p className="text-gray-500 leading-relaxed text-lg max-w-xl">
-                                Building communities, nurturing lives, and giving back to the society that shaped us.
-                                Explore our initiatives in education, environment, health, and disaster relief.
+                            <p className="text-gray-500 text-lg md:text-xl leading-relaxed font-serif italic mb-12">
+                                Building sustainable futures, fostering inclusive growth, and greening our communities across Vadodara.
                             </p>
-                            <div className="flex flex-wrap gap-4 mt-10">
-                                <button onClick={() => scrollToSection("initiatives")} className="flex items-center gap-3 px-5 py-2.5 border border-gray-200 hover:border-[#c9a84c] transition-colors group">
-                                    <span className="text-xl font-bold text-gray-900 group-hover:text-[#c9a84c] transition-colors font-serif">{CSR_POSTS.length}</span>
-                                    <span className="text-xs uppercase tracking-wider text-gray-400 group-hover:text-gray-600 transition-colors">Initiatives</span>
-                                </button>
+                        </div>
+
+                        {/* Impact Summary Row */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-12 border-t border-gray-100">
+                            <div>
+                                <span className="text-3xl md:text-4xl font-serif font-bold text-gray-900 block mb-1">{totalImpact.children}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold block">Underprivileged Children Supported</span>
+                            </div>
+                            <div>
+                                <span className="text-3xl md:text-4xl font-serif font-bold text-gray-900 block mb-1">{totalImpact.trees}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold block">Saplings Planted</span>
+                            </div>
+                            <div>
+                                <span className="text-3xl md:text-4xl font-serif font-bold text-gray-900 block mb-1">{totalImpact.families}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold block">Families Aided in Disasters</span>
+                            </div>
+                            <div>
+                                <span className="text-3xl md:text-4xl font-serif font-bold text-gray-900 block mb-1">{totalImpact.events}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold block">Completed Initiatives</span>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 {/* ── JUMP NAV ──────────────────────────────────────────────── */}
-                <JumpNav active={activeSection} onScroll={scrollToSection} />
+                <JumpNav active={activeSection} onScroll={scrollToSection} count={activePosts.length} />
 
-                {/* ── MISSION STATEMENT ──────────────────────────────────────── */}
-                <section className="bg-gray-50 py-20 md:py-28">
+                {/* ── INTRO DETAILS ─────────────────────────────────────────── */}
+                <section className="py-24 bg-gray-50 border-b border-gray-100">
                     <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                        <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-20 items-start">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
                             <div>
-                                <span className="text-xs uppercase tracking-[0.22em] text-[#c9a84c] font-medium block mb-4">
-                                    Our Commitment
-                                </span>
-                                <h2 className="text-4xl lg:text-5xl font-serif font-bold text-gray-900 leading-[1.1]">
-                                    Building More Than Just Structures
+                                <span className="text-[10px] uppercase tracking-[0.25em] text-[#c9a84c] font-semibold block mb-4">Our Philosophy</span>
+                                <h2 className="text-gray-900 leading-tight text-3xl md:text-4xl font-serif font-bold mb-8">
+                                    Greening the Environment &
+                                    <br />
+                                    <span className="italic text-[#c9a84c]">Nurturing the Future.</span>
                                 </h2>
-                                <div className="w-12 h-px bg-[#c9a84c] mt-6 mb-8" />
-
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-4">
                                     {[
-                                        { value: totalImpact.children, label: "Children Supported" },
-                                        { value: totalImpact.trees, label: "Trees Planted" },
-                                        { value: totalImpact.families, label: "Families Helped" },
-                                        { value: String(totalImpact.events), label: "Initiatives" },
-                                    ].map((stat) => (
-                                        <div key={stat.label}>
-                                            <p className="text-3xl font-bold text-gray-900 font-serif">{stat.value}</p>
-                                            <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">{stat.label}</p>
+                                        { label: "Environmental Stewardship", desc: "Leading massive tree replantation drives, urban forestry, and implementing zero-waste practices across project sites." },
+                                        { label: "Community Support & Disaster Relief", desc: "Partnering with the Red Cross and government bodies to deliver critical relief supplies, food, and essentials in times of natural disasters." },
+                                        { label: "Healthcare & Welfare Camps", desc: "Organizing free medical checkups, blood donation drives, and supporting underfunded shelters for children and seniors." }
+                                    ].map((item, idx) => (
+                                        <div key={idx} className="flex gap-4 p-4 bg-white border border-gray-100 shadow-sm rounded-sm">
+                                            <div className="w-6 h-6 rounded-full bg-[#c9a84c]/10 text-[#c9a84c] flex items-center justify-center text-xs font-mono shrink-0 mt-0.5">{idx + 1}</div>
+                                            <div>
+                                                <h4 className="text-gray-900 font-bold text-sm mb-1">{item.label}</h4>
+                                                <p className="text-gray-500 text-xs leading-relaxed">{item.desc}</p>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
 
-                            <div className="lg:pt-14">
-                                <p className="text-gray-600 text-lg leading-[1.85] mb-6">
+                            <div className="bg-white p-8 border border-gray-100">
+                                <h3 className="font-serif font-bold text-lg mb-6">Our Core Vision</h3>
+                                <p className="text-gray-500 leading-relaxed text-sm mb-6">
                                     At Space Age Group, we believe that true progress goes beyond concrete and steel. Since our founding, we have embraced a deep responsibility to the communities that host our projects — investing in their education, health, environment, and resilience.
                                 </p>
-                                <p className="text-gray-500 text-base leading-relaxed">
+                                <p className="text-gray-500 leading-relaxed text-sm">
                                     Our Corporate Social Responsibility initiatives are not afterthoughts — they are integral to how we measure success as a company. Every project we build is accompanied by a promise: to leave the community better than we found it.
                                 </p>
                             </div>
@@ -640,7 +768,7 @@ export default function CSRPage() {
                                     className={`text-xs font-medium px-4 py-2 border transition-all duration-200 ${activeCategory === cat ? "bg-gray-900 border-gray-900 text-white" : "bg-white border-gray-200 text-gray-400 hover:text-gray-600"}`}
                                 >
                                     {cat}
-                                    {cat !== "All" && <span className="ml-1.5 text-[10px] opacity-60">({CSR_POSTS.filter((p) => p.category === cat).length})</span>}
+                                    {cat !== "All" && <span className="ml-1.5 text-[10px] opacity-60">({activePosts.filter((p) => p.category === cat).length})</span>}
                                 </button>
                             ))}
                         </div>
@@ -652,7 +780,7 @@ export default function CSRPage() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filtered.map((post, idx) => (
-                                    <CSRCard key={post.id} post={post} index={idx} />
+                                    <CSRCard key={post.id} post={post} index={idx} useMock={useMock} />
                                 ))}
                             </div>
                         )}
@@ -685,6 +813,7 @@ export default function CSRPage() {
                 </section>
 
                 <Footer />
+                <DevDataToggle />
             </div>
         </LayoutWrapper>
     );

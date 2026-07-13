@@ -1,19 +1,43 @@
 // components/AboutSection/AboutSection.tsx
 "use client";
 
+import { useState, useEffect } from "react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import Image from "next/image";
 import Link from "next/link";
 
-const STATS = [
-  { value: "35+", label: "Years of Excellence" },
-  { value: "120+", label: "Projects Completed" },
-  { value: "3000+", label: "Happy Families" },
-  { value: "15", label: "Expert Directors" },
-];
-
 export default function AboutSection() {
   const sectionRef = useScrollReveal<HTMLElement>();
+  const [useMock, setUseMock] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
+
+  useEffect(() => {
+    setUseMock(localStorage.getItem("use_mock_data") === "true");
+    const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+    fetch(`${adminApiUrl}/api/settings`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (data && !data.error) setSettings(data);
+      })
+      .catch(err => {
+        console.warn("Failed to fetch settings in AboutSection component:", err.message);
+      });
+  }, []);
+
+  const stats = !useMock && settings ? [
+    { value: settings.yearsOfExcellence, label: "Years of Excellence" },
+    { value: settings.projectsCompleted, label: "Projects Completed" },
+    { value: settings.happyFamilies, label: "Happy Families" },
+    { value: settings.clientSatisfaction, label: "Client Satisfaction" },
+  ] : [
+    { value: "35+", label: "Years of Excellence" },
+    { value: "120+", label: "Projects Completed" },
+    { value: "3000+", label: "Happy Families" },
+    { value: "15", label: "Expert Directors" },
+  ];
 
   return (
     <section
@@ -79,7 +103,7 @@ export default function AboutSection() {
 
             {/* Stats Row */}
             <div className="mt-10 pt-8 border-t border-[#e8e4de] grid grid-cols-4 gap-6">
-              {STATS.map((stat, idx) => (
+              {stats.map((stat, idx) => (
                 <div key={idx}>
                   <div className="text-3xl font-bold text-[#1a1a1a]">{stat.value}</div>
                   <div className="text-xs uppercase tracking-wider text-[#9a9a9a] mt-1">

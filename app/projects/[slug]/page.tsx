@@ -1,12 +1,13 @@
 // app/projects/[slug]/page.tsx
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import LayoutWrapper from "@/components/LayoutWrapper/LayoutWrapper";
 import Footer from "@/components/Footer/Footer";
+import DevDataToggle from "@/components/DevDataToggle/DevDataToggle";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -369,7 +370,8 @@ function PhotoGallery({ photos }: { photos: Photo[] }) {
   );
 }
 
-function VirtualTour({ tour }: { tour: typeof PROJECT_DATA.virtualTour }) {
+function VirtualTour({ tour }: { tour: { type: string; embedUrl: string; description?: string } | null }) {
+  if (!tour || !tour.embedUrl) return null;
   const getEmbedUrl = () => {
     if (tour.type === "YouTube" && tour.embedUrl.includes("youtube.com/embed/")) {
       return tour.embedUrl;
@@ -399,10 +401,13 @@ function VirtualTour({ tour }: { tour: typeof PROJECT_DATA.virtualTour }) {
   );
 }
 
-function DownloadBrochure() {
+function DownloadBrochure({ brochureUrl }: { brochureUrl?: string }) {
   const handleDownload = () => {
-    // In real implementation, this would download the actual PDF
-    alert("Brochure download started. (Demo - PDF would download here)");
+    if (brochureUrl) {
+      window.open(brochureUrl, "_blank");
+    } else {
+      alert("Brochure download started. (Demo - PDF would download here)");
+    }
   };
   
   return (
@@ -413,7 +418,7 @@ function DownloadBrochure() {
         </svg>
       </div>
       <h3 className="text-xl font-serif font-semibold text-gray-900 mb-2">Download Brochure</h3>
-      <p className="text-sm text-gray-500 mb-6">Get detailed project information, floor plans, and pricing in our comprehensive brochure (PDF, 5.2 MB)</p>
+      <p className="text-sm text-gray-500 mb-6">Get detailed project information, floor plans, and pricing in our comprehensive brochure (PDF)</p>
       <button
         onClick={handleDownload}
         className="inline-flex items-center gap-2 px-6 py-3 bg-[#c9a84c] text-gray-900 font-semibold text-sm hover:bg-[#b8962e] transition-colors"
@@ -423,7 +428,7 @@ function DownloadBrochure() {
         </svg>
         Download PDF Brochure
       </button>
-      <p className="text-xs text-gray-400 mt-4">PDF only · 5.2 MB</p>
+      <p className="text-xs text-gray-400 mt-4">PDF Format</p>
     </div>
   );
 }
@@ -432,8 +437,105 @@ function DownloadBrochure() {
 
 export default function ProjectDetailsPage() {
   const params = useParams();
+  const slug = params?.slug as string;
   const [isSticky, setIsSticky] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
+
+  const [useMock, setUseMock] = useState(false);
+  const [project, setProject] = useState<any>(null);
+
+  useEffect(() => {
+    setUseMock(localStorage.getItem("use_mock_data") === "true");
+
+    const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+    if (slug) {
+      fetch(`${adminApiUrl}/api/projects/${slug}`)
+        .then(res => {
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          if (data && !data.error) setProject(data);
+        })
+        .catch(err => {
+          console.warn("Failed to fetch project details from admin API:", err.message);
+        });
+    }
+  }, [slug]);
+
+  const activeProject = useMemo(() => {
+    if (useMock || !project) {
+      return PROJECT_DATA;
+    }
+
+    let statusLabel = "Upcoming";
+    if (project.status === "completed") statusLabel = "Completed";
+    if (project.status === "ongoing") statusLabel = "Ongoing";
+
+    const heroImages = Array.isArray(project.heroImages) && project.heroImages.length > 0
+      ? project.heroImages.map((img: any) => img.url)
+      : ["/images/project-1.jpg"];
+
+    const floorPlans = Array.isArray(project.floorPlans)
+      ? project.floorPlans.map((fp: any) => ({
+          type: fp.bhkType || "Plan",
+          image: fp.url || "/images/project-1.jpg",
+          area: fp.carpetArea || "TBD",
+        }))
+      : [];
+
+    const commonSpecs = Array.isArray(project.commonSpecifications)
+      ? project.commonSpecifications.map((s: any) => ({
+          field: s.label,
+          value: s.value,
+        }))
+      : [];
+
+    const commercialSpecs = Array.isArray(project.commercialSpecifications)
+      ? project.commercialSpecifications.map((s: any) => ({
+          field: s.label,
+          value: s.value,
+        }))
+      : [];
+
+    const amenities = Array.isArray(project.amenities)
+      ? project.amenities.map((a: any) => ({
+          name: a.name,
+          icon: a.icon || "✨",
+          category: a.category || "General",
+        }))
+      : [];
+
+    const samplePhotos = Array.isArray(project.sampleHousePhotos)
+      ? project.sampleHousePhotos.map((photo: any, index: number) => ({
+          id: photo._id || index + 1,
+          url: photo.url,
+          roomType: photo.roomType || "Room",
+        }))
+      : [];
+
+    const virtualTour = project.virtualTour ? {
+      type: project.virtualTour.type || "Other",
+      embedUrl: project.virtualTour.embedUrl || "",
+      description: project.virtualTour.description || "",
+    } : null;
+
+    return {
+      title: project.title || "",
+      headline: project.headline || "",
+      status: statusLabel,
+      shortIntro: project.shortIntro || "",
+      heroImages,
+      layoutPlan: project.layoutPlan?.url || "/images/FP-1.png",
+      floorPlans,
+      commonSpecs,
+      commercialSpecs,
+      amenities,
+      samplePhotos,
+      virtualTour,
+      brochureUrl: project.brochure?.url || "",
+    };
+  }, [useMock, project]);
   
   const sections = [
     { id: "overview", label: "Overview", icon: "ℹ️" },
@@ -479,7 +581,7 @@ export default function ProjectDetailsPage() {
     <LayoutWrapper>
       <div className="bg-white min-h-screen">
         {/* Hero Section */}
-        <HeroCarousel images={PROJECT_DATA.heroImages} />
+        <HeroCarousel images={activeProject.heroImages} />
         
         {/* Project Info Bar */}
         <div className="bg-white border-b border-gray-100">
@@ -488,15 +590,15 @@ export default function ProjectDetailsPage() {
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-xs uppercase tracking-[0.2em] text-[#c9a84c] font-semibold">
-                    {PROJECT_DATA.status}
+                    {activeProject.status}
                   </span>
                   <span className="text-xs text-gray-400">|</span>
                   <span className="text-xs uppercase tracking-wider text-gray-400">RERA Registered</span>
                 </div>
                 <h1 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">
-                  {PROJECT_DATA.title}
+                  {activeProject.title}
                 </h1>
-                <p className="text-lg text-gray-600 mt-2">{PROJECT_DATA.headline}</p>
+                <p className="text-lg text-gray-600 mt-2">{activeProject.headline}</p>
               </div>
               <div className="flex gap-3">
                 <button
@@ -506,7 +608,13 @@ export default function ProjectDetailsPage() {
                   Virtual Tour
                 </button>
                 <button
-                  onClick={() => scrollToSection("brochure")}
+                  onClick={() => {
+                    if (activeProject.brochureUrl) {
+                      window.open(activeProject.brochureUrl, "_blank");
+                    } else {
+                      scrollToSection("brochure");
+                    }
+                  }}
                   className="px-5 py-2.5 bg-[#c9a84c] text-gray-900 text-sm font-semibold hover:bg-[#b8962e] transition-colors"
                 >
                   Download Brochure
@@ -520,7 +628,7 @@ export default function ProjectDetailsPage() {
         <SectionWrapper title="Introduction">
           <div className="max-w-3xl">
             <p className="text-gray-600 leading-relaxed text-lg">
-              {PROJECT_DATA.shortIntro}
+              {activeProject.shortIntro}
             </p>
           </div>
         </SectionWrapper>
@@ -554,13 +662,13 @@ export default function ProjectDetailsPage() {
         {/* Common Specifications */}
         <div id="specifications">
           <SectionWrapper title="Common Specifications">
-            <SpecificationsTable specs={PROJECT_DATA.commonSpecs} title="Building Specifications" />
+            <SpecificationsTable specs={activeProject.commonSpecs} title="Building Specifications" />
           </SectionWrapper>
         </div>
         
         {/* Commercial Specifications */}
         <div className="max-w-7xl mx-auto px-6 lg:px-8 -mt-8 mb-8">
-          <SpecificationsTable specs={PROJECT_DATA.commercialSpecs} title="Commercial Details & Pricing" />
+          <SpecificationsTable specs={activeProject.commercialSpecs} title="Commercial Details & Pricing" />
         </div>
         
         {/* Layout Plan */}
@@ -568,7 +676,7 @@ export default function ProjectDetailsPage() {
           <SectionWrapper title="Layout Plan">
             <div className="relative aspect-[16/9] bg-gray-100 rounded-lg overflow-hidden shadow-lg">
               <Image
-                src={PROJECT_DATA.layoutPlan}
+                src={activeProject.layoutPlan}
                 alt="Site Layout Plan"
                 fill
                 className="object-cover"
@@ -584,7 +692,7 @@ export default function ProjectDetailsPage() {
         <div id="floor-plans">
           <SectionWrapper title="Floor Plans">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {PROJECT_DATA.floorPlans.map((plan: FloorPlan, idx: number) => (
+              {activeProject.floorPlans.map((plan: FloorPlan, idx: number) => (
                 <div key={idx} className="group cursor-pointer">
                   <div className="relative aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden shadow-md group-hover:shadow-xl transition-shadow">
                     <Image
@@ -608,34 +716,36 @@ export default function ProjectDetailsPage() {
         {/* Amenities */}
         <div id="amenities">
           <SectionWrapper title="Amenities">
-            <AmenitiesGrid amenities={PROJECT_DATA.amenities} />
+            <AmenitiesGrid amenities={activeProject.amenities} />
           </SectionWrapper>
         </div>
         
         {/* Sample House Photos */}
         <div id="gallery">
           <SectionWrapper title="Sample House Photos">
-            <PhotoGallery photos={PROJECT_DATA.samplePhotos} />
+            <PhotoGallery photos={activeProject.samplePhotos} />
           </SectionWrapper>
         </div>
         
         {/* Virtual Tour & Brochure Row */}
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div id="virtual-tour">
-              <div className="mb-4">
-                <span className="text-xs uppercase tracking-[0.22em] text-[#c9a84c] font-semibold">Virtual Tour</span>
-                <div className="w-12 h-px bg-[#c9a84c] mt-2" />
+            {activeProject.virtualTour?.embedUrl && (
+              <div id="virtual-tour">
+                <div className="mb-4">
+                  <span className="text-xs uppercase tracking-[0.22em] text-[#c9a84c] font-semibold">Virtual Tour</span>
+                  <div className="w-12 h-px bg-[#c9a84c] mt-2" />
+                </div>
+                <VirtualTour tour={activeProject.virtualTour} />
               </div>
-              <VirtualTour tour={PROJECT_DATA.virtualTour} />
-            </div>
+            )}
             
             <div id="brochure">
               <div className="mb-4">
                 <span className="text-xs uppercase tracking-[0.22em] text-[#c9a84c] font-semibold">Download Brochure</span>
                 <div className="w-12 h-px bg-[#c9a84c] mt-2" />
               </div>
-              <DownloadBrochure />
+              <DownloadBrochure brochureUrl={activeProject.brochureUrl} />
             </div>
           </div>
         </div>
@@ -659,6 +769,8 @@ export default function ProjectDetailsPage() {
         <Footer />
       </div>
       
+      <DevDataToggle />
+
       <style jsx>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;

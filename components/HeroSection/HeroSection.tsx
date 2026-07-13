@@ -11,31 +11,45 @@ const SLIDES = [
   { src: "/images/Hero3.jpg", alt: "Sustainable developments", title: "Eco-Conscious Design" },
 ];
 
-export default function HeroSection() {
+interface Slide {
+  src: string;
+  alt: string;
+  title: string;
+}
+
+interface HeroSectionProps {
+  slides?: Slide[];
+}
+
+export default function HeroSection({ slides }: HeroSectionProps) {
+  const [useMock, setUseMock] = useState(false);
   const [current, setCurrent] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [animKey, setAnimKey] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    setUseMock(localStorage.getItem("use_mock_data") === "true");
+    setLoaded(true);
+  }, []);
+
+  const activeSlides = !useMock && slides && slides.length > 0 ? slides : SLIDES;
+
+  useEffect(() => {
     timerRef.current = setTimeout(() => {
-      setCurrent((prev) => (prev + 1) % SLIDES.length);
+      setCurrent((prev) => (prev + 1) % activeSlides.length);
       setAnimKey((prev) => prev + 1);
     }, 6000);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [current]);
-
-  useEffect(() => {
-    setLoaded(true);
-  }, []);
+  }, [current, activeSlides.length]);
 
   return (
     <section className="relative w-full h-screen overflow-hidden">
       {/* Background Images */}
       <div className="absolute inset-0 z-0">
-        {SLIDES.map((slide, index) => (
+        {activeSlides.map((slide, index) => (
           <div
             key={slide.src}
             className={`absolute inset-0 transition-opacity duration-[1400ms] ease-in-out ${index === current ? "opacity-100" : "opacity-0"
@@ -75,13 +89,13 @@ export default function HeroSection() {
       {/* Slide Counter — bottom-right */}
       <div className="absolute bottom-8 right-8 z-10 hidden sm:block">
         <span className="text-xs text-white/50 font-mono">
-          {String(current + 1).padStart(2, "0")} / {String(SLIDES.length).padStart(2, "0")}
+          {String(current + 1).padStart(2, "0")} / {String(activeSlides.length).padStart(2, "0")}
         </span>
       </div>
 
       {/* Slide Dot Indicators */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex gap-2">
-        {SLIDES.map((_, index) => (
+        {activeSlides.map((_, index) => (
           <button
             key={index}
             onClick={() => { setCurrent(index); setAnimKey((prev) => prev + 1); }}

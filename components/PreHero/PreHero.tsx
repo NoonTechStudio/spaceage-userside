@@ -1,10 +1,29 @@
 // components/PreHero/PreHero.tsx
 "use client";
+import { useState, useEffect } from "react";
 
 import Link from "next/link";
 import Image from "next/image";
 
 export default function PreHero() {
+  const [useMock, setUseMock] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
+
+  useEffect(() => {
+    setUseMock(localStorage.getItem("use_mock_data") === "true");
+    const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+    fetch(`${adminApiUrl}/api/settings`)
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        if (data && !data.error) setSettings(data);
+      })
+      .catch(err => {
+        console.warn("Failed to fetch settings in PreHero component:", err.message);
+      });
+  }, []);
   return (
     <section className="relative w-full min-h-screen bg-[#f7f5f2] overflow-hidden pt-[72px]">
       <div className="grid lg:grid-cols-[55fr_45fr] min-h-[calc(100vh-72px)]">
@@ -54,23 +73,23 @@ export default function PreHero() {
           </div>
 
           {/* Stat Row */}
-          <div className="mt-14 pt-8 border-t border-[#e8e4de] flex gap-10 items-center flex-wrap">
+          <div className="mt-14 mb-3 pt-8 border-t border-[#e8e4de] flex gap-10 items-center flex-wrap">
             <div>
-              <div className="text-2xl font-bold text-[#1a1a1a]">35+</div>
+              <div className="text-2xl font-bold text-[#1a1a1a]">{!useMock && settings ? settings.yearsOfExcellence : "35+"}</div>
               <div className="text-xs uppercase tracking-wider text-[#9a9a9a] mt-1">
                 Years Excellence
               </div>
             </div>
             <div className="w-px h-8 bg-[#e8e4de]" />
             <div>
-              <div className="text-2xl font-bold text-[#1a1a1a]">120+</div>
+              <div className="text-2xl font-bold text-[#1a1a1a]">{!useMock && settings ? settings.projectsCompleted : "120+"}</div>
               <div className="text-xs uppercase tracking-wider text-[#9a9a9a] mt-1">
                 Projects Completed
               </div>
             </div>
             <div className="w-px h-8 bg-[#e8e4de]" />
             <div>
-              <div className="text-2xl font-bold text-[#1a1a1a]">5000+</div>
+              <div className="text-2xl font-bold text-[#1a1a1a]">{!useMock && settings ? settings.happyFamilies : "5000+"}</div>
               <div className="text-xs uppercase tracking-wider text-[#9a9a9a] mt-1">
                 Happy Families
               </div>

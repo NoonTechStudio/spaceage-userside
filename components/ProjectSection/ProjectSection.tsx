@@ -1,62 +1,93 @@
 // components/ProjectsSection/ProjectsSection.tsx
 "use client";
 
+import { useState, useEffect } from "react";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import Image from "next/image";
 import Link from "next/link";
 
-const PROJECTS = [
+interface MediaItem {
+  url: string;
+  isMainImage?: boolean;
+  alt?: string;
+}
+
+interface Project {
+  _id: string;
+  title: string;
+  slug: string;
+  category?: string;
+  address?: string;
+  estYear?: string;
+  featured?: boolean;
+  heroImages: MediaItem[];
+}
+
+interface ProjectsSectionProps {
+  projects?: Project[];
+}
+
+const DEFAULT_PROJECTS: Project[] = [
   {
-    id: 1,
-    name: "Fakhri Colony",
+    _id: "1",
+    title: "Fakhri Colony",
     category: "Residential Township",
-    location: "Open Plot Scheme, Seguwada, Dabhoi Road",
-    year: "2023",
-    size: "25 Acres",
-    units: "450+",
-    src: "/images/fakhri-colony.png",
+    address: "Open Plot Scheme, Seguwada, Dabhoi Road",
+    estYear: "2023",
     featured: true,
+    slug: "fakhri-colony",
+    heroImages: [{ url: "/images/fakhri-colony.png" }],
   },
   {
-    id: 2,
-    name: "Bhagyalakshmi Riverfront",
+    _id: "2",
+    title: "Bhagyalakshmi Riverfront",
     category: "Premium Apartments",
-    location: "Weekend Home and Resort Savli-Timba Road, Near Manjusar GIDC",
-    year: "2022",
-    size: "5 Acres",
-    units: "120+",
-    src: "/images/Blaxmi.jpg",
+    address: "Weekend Home and Resort Savli-Timba Road, Near Manjusar GIDC",
+    estYear: "2022",
     featured: false,
+    slug: "bhagyalakshmi-riverfront",
+    heroImages: [{ url: "/images/Blaxmi.jpg" }],
   },
   {
-    id: 3,
-    name: "Burhani Plaza",
+    _id: "3",
+    title: "Burhani Plaza",
     category: "Commercial Hub",
-    location: "Shops & 2/3 bhk spacious apartments Ajwa road, Vadodara",
-    year: "2024",
-    size: "8 Acres",
-    units: "80+",
-    src: "/images/Burhani-plaza.png",
+    address: "Shops & 2/3 bhk spacious apartments Ajwa road, Vadodara",
+    estYear: "2024",
     featured: true,
+    slug: "burhani-plaza",
+    heroImages: [{ url: "/images/Burhani-plaza.png" }],
   },
   {
-    id: 4,
-    name: "Aambawadi Sangma",
+    _id: "4",
+    title: "Aambawadi Sangma",
     category: "Integrated Township",
-    location: "Affordable 1, 2 Bhk Apartments Sangma, Padra, Vadodara",
-    year: "2021",
-    size: "35 Acres",
-    units: "600+",
-    src: "/images/Ambawadi.jpg",
+    address: "Affordable 1, 2 Bhk Apartments Sangma, Padra, Vadodara",
+    estYear: "2021",
     featured: false,
+    slug: "aambawadi-sangma",
+    heroImages: [{ url: "/images/Ambawadi.jpg" }],
   },
 ];
 
-export default function ProjectsSection() {
+export default function ProjectsSection({ projects }: ProjectsSectionProps) {
   const sectionRef = useScrollReveal<HTMLElement>();
+  const [useMock, setUseMock] = useState(false);
 
-  // First project is the large featured card; rest go in the 3-col row
-  const [featuredProject, ...restProjects] = PROJECTS;
+  useEffect(() => {
+    setUseMock(localStorage.getItem("use_mock_data") === "true");
+  }, []);
+
+  const activeProjects = !useMock && projects && projects.length > 0 ? projects.slice(0, 4) : DEFAULT_PROJECTS;
+
+  // Find the featured project (marked true)
+  let featuredIndex = activeProjects.findIndex((p) => p.featured);
+  if (featuredIndex === -1) {
+    featuredIndex = 0; // fallback to first
+  }
+
+  const featuredProject = activeProjects[featuredIndex];
+  const restProjects = activeProjects.filter((_, index) => index !== featuredIndex).slice(0, 3);
 
   return (
     <section
@@ -88,78 +119,82 @@ export default function ProjectsSection() {
         </div>
 
         {/* Row 1: Large featured card — full width, aspect 21/9 */}
-        <div className="mb-6">
-          <Link
-            href={`/projects/${featuredProject.id}`}
-            className="group block relative overflow-hidden rounded-none bg-white"
-          >
-            <div className="relative overflow-hidden" style={{ aspectRatio: "21/9" }}>
-              <Image
-                src={featuredProject.src}
-                alt={featuredProject.name}
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                sizes="100vw"
-              />
-              {/* Featured label */}
-              <div className="absolute top-4 left-4 z-10">
-                <span className="text-xs uppercase tracking-widest text-[#c9a84c] border border-[#c9a84c] px-3 py-1 bg-[#0f0f0f]/60">
-                  Featured
-                </span>
-              </div>
-            </div>
-            <div className="p-6 border-t-2 border-[#c9a84c] bg-white">
-              <span className="text-xs uppercase tracking-[0.2em] text-[#c9a84c] font-medium">
-                {featuredProject.category}
-              </span>
-              <h3
-                className="text-xl font-bold text-[#1a1a1a] mt-1"
-                style={{
-                  fontFamily: "var(--font-playfair), 'Playfair Display', serif",
-                }}
-              >
-                {featuredProject.name}
-              </h3>
-              <div className="text-sm text-[#9a9a9a] mt-2 flex gap-4">
-                <span>{featuredProject.location}</span>
-                <span>{featuredProject.year}</span>
-              </div>
-            </div>
-          </Link>
-        </div>
-
-        {/* Row 2: 3 smaller cards — grid-cols-3 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {restProjects.map((project) => (
+        {featuredProject && (
+          <div className="mb-6">
             <Link
-              key={project.id}
-              href={`/projects/${project.id}`}
+              href={`/projects/${featuredProject.slug}`}
               className="group block relative overflow-hidden rounded-none bg-white"
             >
-              <div className="relative overflow-hidden" style={{ aspectRatio: "4/3" }}>
+              <div className="relative overflow-hidden" style={{ aspectRatio: "21/9" }}>
                 <Image
-                  src={project.src}
-                  alt={project.name}
+                  src={featuredProject.heroImages?.find(img => img.isMainImage)?.url || featuredProject.heroImages?.[0]?.url || "/images/project-1.jpg"}
+                  alt={featuredProject.title}
                   fill
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, 33vw"
+                  sizes="100vw"
                 />
+                {/* Featured label */}
+                <div className="absolute top-4 left-4 z-10">
+                  <span className="text-xs uppercase tracking-widest text-[#c9a84c] border border-[#c9a84c] px-3 py-1 bg-[#0f0f0f]/60">
+                    Featured
+                  </span>
+                </div>
               </div>
               <div className="p-6 border-t-2 border-[#c9a84c] bg-white">
                 <span className="text-xs uppercase tracking-[0.2em] text-[#c9a84c] font-medium">
-                  {project.category}
+                  {featuredProject.category || "Project"}
                 </span>
-                <h3 className="text-xl font-bold text-[#1a1a1a] mt-1">
-                  {project.name}
+                <h3
+                  className="text-xl font-bold text-[#1a1a1a] mt-1"
+                  style={{
+                    fontFamily: "var(--font-playfair), 'Playfair Display', serif",
+                  }}
+                >
+                  {featuredProject.title}
                 </h3>
                 <div className="text-sm text-[#9a9a9a] mt-2 flex gap-4">
-                  <span>{project.location}</span>
-                  <span>{project.year}</span>
+                  <span>{featuredProject.address}</span>
+                  <span>{featuredProject.estYear}</span>
                 </div>
               </div>
             </Link>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {/* Row 2: 3 smaller cards — grid-cols-3 */}
+        {restProjects.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {restProjects.map((project) => (
+              <Link
+                key={project._id}
+                href={`/projects/${project.slug}`}
+                className="group block relative overflow-hidden rounded-none bg-white"
+              >
+                <div className="relative overflow-hidden" style={{ aspectRatio: "4/3" }}>
+                  <Image
+                    src={project.heroImages?.find(img => img.isMainImage)?.url || project.heroImages?.[0]?.url || "/images/project-1.jpg"}
+                    alt={project.title}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
+                </div>
+                <div className="p-6 border-t-2 border-[#c9a84c] bg-white">
+                  <span className="text-xs uppercase tracking-[0.2em] text-[#c9a84c] font-medium">
+                    {project.category || "Project"}
+                  </span>
+                  <h3 className="text-xl font-bold text-[#1a1a1a] mt-1">
+                    {project.title}
+                  </h3>
+                  <div className="text-sm text-[#9a9a9a] mt-2 flex gap-4">
+                    <span>{project.address}</span>
+                    <span>{project.estYear}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* CTA — underlined text link */}
         <div className="mt-16 text-center">
@@ -186,3 +221,4 @@ export default function ProjectsSection() {
     </section>
   );
 }
+

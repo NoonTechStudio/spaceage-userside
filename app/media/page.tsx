@@ -1,11 +1,12 @@
 // app/media/page.tsx
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import LayoutWrapper from "@/components/LayoutWrapper/LayoutWrapper";
 import Footer from "@/components/Footer/Footer";
+import DevDataToggle from "@/components/DevDataToggle/DevDataToggle";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -17,6 +18,7 @@ interface Flyer {
     tag: string;
     src: string;
     downloadSrc?: string;
+    description?: string;
 }
 
 interface Brochure {
@@ -28,6 +30,7 @@ interface Brochure {
     year: string;
     coverSrc: string;
     downloadSrc?: string;
+    description?: string;
 }
 
 interface Video {
@@ -38,7 +41,16 @@ interface Video {
     duration: string;
     category: string;
     year: string;
+    thumbnail?: string;
+    provider?: string;
+    url?: string;
+    isFeatured?: boolean;
 }
+
+const isImageUrl = (url?: string) => {
+    if (!url) return false;
+    return /\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(url) || url.includes('/image/upload/');
+};
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 
@@ -284,7 +296,11 @@ function Lightbox({ items, activeIndex, onClose, onPrev, onNext, type }: {
             <div className="relative flex flex-col lg:flex-row max-w-5xl w-full mx-4 bg-white" style={{ maxHeight: "92vh" }} onClick={(e) => e.stopPropagation()}>
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#c9a84c] z-10" />
                 <div className="relative lg:w-3/5 bg-gray-50 flex items-center justify-center overflow-hidden" style={{ minHeight: "360px" }}>
-                    <MediaPlaceholder label={item.title} />
+                    {isImageUrl(coverSrc) ? (
+                        <img src={coverSrc} alt={item.title} className="w-full h-full object-contain" />
+                    ) : (
+                        <MediaPlaceholder label={item.title} />
+                    )}
                     {activeIndex > 0 && (
                         <button onClick={onPrev} className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 flex items-center justify-center hover:bg-white transition-colors">
                             <svg className="w-4 h-4 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -315,9 +331,9 @@ function Lightbox({ items, activeIndex, onClose, onPrev, onNext, type }: {
                     <p className="text-xs text-[#c9a84c] mb-6">{extraLeft}</p>
                     <div className="w-8 h-px bg-gray-200 mb-6" />
                     <p className="text-sm text-gray-500 leading-relaxed mb-8 flex-1">
-                        {type === "flyer"
+                        {item.description || (type === "flyer"
                             ? "This flyer was released as part of the project marketing campaign. Download the high-resolution version for print or digital sharing."
-                            : "This brochure contains detailed floor plans, specifications, amenity details, and investment information for this project."}
+                            : "This brochure contains detailed floor plans, specifications, amenity details, and investment information for this project.")}
                     </p>
                     <div className="space-y-3">
                         <a href={downloadSrc || "#"} download className="flex items-center justify-center gap-2 w-full py-3.5 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors">
@@ -361,7 +377,17 @@ function VideoModal({ video, onClose }: { video: Video; onClose: () => void }) {
                     </svg>
                 </button>
                 <div className="relative w-full bg-black" style={{ paddingTop: "56.25%" }}>
-                    <iframe className="absolute inset-0 w-full h-full" src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&rel=0`} title={video.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                    {video.provider === 'cloudinary' && video.url ? (
+                        <video 
+                            className="absolute inset-0 w-full h-full" 
+                            src={video.url} 
+                            controls 
+                            autoPlay 
+                            playsInline
+                        />
+                    ) : (
+                        <iframe className="absolute inset-0 w-full h-full" src={`https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&rel=0`} title={video.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                    )}
                 </div>
                 <div className="bg-gray-900 px-6 py-4 flex items-start justify-between gap-4 border-t border-white/10">
                     <div>
@@ -389,7 +415,11 @@ function FlyerCard({ flyer, index, onClick }: { flyer: Flyer; index: number; onC
         <RevealSection delay={index * 60}>
             <div className="group cursor-pointer" onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={onClick}>
                 <div className="relative overflow-hidden bg-gray-100" style={{ aspectRatio: "3/4", boxShadow: hovered ? "0 20px 35px -12px rgba(0,0,0,0.15)" : "0 1px 2px rgba(0,0,0,0.02)", transition: "box-shadow 0.35s ease" }}>
-                    <MediaPlaceholder label={flyer.title} />
+                    {isImageUrl(flyer.src) ? (
+                        <img src={flyer.src} alt={flyer.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                        <MediaPlaceholder label={flyer.title} />
+                    )}
                     <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "rgba(15,15,15,0.7)", opacity: hovered ? 1 : 0, transition: "opacity 0.3s ease" }}>
                         <div className="flex flex-col items-center gap-2 text-white">
                             <div className="w-12 h-12 border border-white/50 flex items-center justify-center">
@@ -421,7 +451,11 @@ function BrochureCard({ brochure, index, onClick }: { brochure: Brochure; index:
             <div className="group cursor-pointer" style={{ borderLeft: hovered ? "3px solid #c9a84c" : "3px solid transparent", transition: "border-color 0.3s ease" }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onClick={onClick}>
                 <div className="flex gap-5 p-5 bg-white border border-gray-100" style={{ boxShadow: hovered ? "0 8px 32px rgba(0,0,0,0.07)" : "none", transition: "box-shadow 0.3s ease" }}>
                     <div className="relative overflow-hidden shrink-0 bg-gray-100" style={{ width: "100px", aspectRatio: "3/4" }}>
-                        <MediaPlaceholder label="" />
+                        {isImageUrl(brochure.coverSrc) ? (
+                            <img src={brochure.coverSrc} alt={brochure.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        ) : (
+                            <MediaPlaceholder label="" />
+                        )}
                         <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "rgba(15,15,15,0.55)", opacity: hovered ? 1 : 0, transition: "opacity 0.3s ease" }}>
                             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -493,11 +527,17 @@ function VideoCard({ video, index, onClick }: { video: Video; index: number; onC
     );
 }
 
-function JumpNav({ active, onScroll }: { active: string; onScroll: (id: string) => void }) {
+function JumpNav({ active, onScroll, flyerCount, brochureCount, videoCount }: { 
+    active: string; 
+    onScroll: (id: string) => void;
+    flyerCount: number;
+    brochureCount: number;
+    videoCount: number;
+}) {
     const sections = [
-        { id: "flyers", label: "Flyers", count: FLYERS.length },
-        { id: "brochures", label: "Brochures", count: BROCHURES.length },
-        { id: "videos", label: "Videos", count: VIDEOS.length },
+        { id: "flyers", label: "Flyers", count: flyerCount },
+        { id: "brochures", label: "Brochures", count: brochureCount },
+        { id: "videos", label: "Videos", count: videoCount },
     ];
 
     return (
@@ -517,7 +557,7 @@ function JumpNav({ active, onScroll }: { active: string; onScroll: (id: string) 
                             </span>
                         </button>
                     ))}
-                    <span className="ml-auto text-xs text-gray-400 whitespace-nowrap">{FLYERS.length + BROCHURES.length + VIDEOS.length} Total Items</span>
+                    <span className="ml-auto text-xs text-gray-400 whitespace-nowrap">{flyerCount + brochureCount + videoCount} Total Items</span>
                 </div>
             </div>
         </div>
@@ -527,13 +567,128 @@ function JumpNav({ active, onScroll }: { active: string; onScroll: (id: string) 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
 export default function MediaPage() {
+    const [mediaList, setMediaList] = useState<any[]>([]);
+    const [useMock, setUseMock] = useState(true);
     const [flyerLightbox, setFlyerLightbox] = useState<number | null>(null);
     const [brochureLightbox, setBrochureLightbox] = useState<number | null>(null);
     const [activeVideo, setActiveVideo] = useState<Video | null>(null);
     const [videoFilter, setVideoFilter] = useState("All");
     const [activeSection, setActiveSection] = useState("flyers");
 
-    const filteredVideos = videoFilter === "All" ? VIDEOS : VIDEOS.filter((v) => v.category === videoFilter);
+    useEffect(() => {
+        setUseMock(localStorage.getItem("use_mock_data") === "true");
+
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+        fetch(`${adminApiUrl}/api/media`)
+            .then(res => {
+                if (!res.ok) throw new Error(`Status ${res.status}`);
+                return res.json();
+            })
+            .then(data => {
+                if (Array.isArray(data)) setMediaList(data);
+            })
+            .catch(err => {
+                console.warn("Failed to fetch media list from admin API:", err.message);
+            });
+    }, []);
+
+    // Helper to extract YouTube ID
+    const getYoutubeId = (url: string) => {
+        if (!url) return "dQw4w9WgXcQ";
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : "dQw4w9WgXcQ";
+    };
+
+    const activeFlyers = useMemo<Flyer[]>(() => {
+        if (useMock || !mediaList || mediaList.length === 0) return FLYERS;
+
+        const list: Flyer[] = [];
+        let counter = 1;
+        mediaList.forEach((m) => {
+            if (Array.isArray(m.items)) {
+                m.items.forEach((item: any) => {
+                    if (item.category === "flyer" || item.mediaType === "image") {
+                        list.push({
+                            id: counter++,
+                            title: item.title || m.title || "Launch Flyer",
+                            project: m.project?.title || "SpaceAge Group",
+                            year: m.createdAt ? new Date(m.createdAt).getFullYear().toString() : "2026",
+                            tag: item.category === "flyer" ? "Flyer" : "Launch",
+                            src: item.url,
+                            downloadSrc: item.url,
+                            description: item.description || '',
+                        });
+                    }
+                });
+            }
+        });
+        return list.length > 0 ? list : FLYERS;
+    }, [useMock, mediaList]);
+
+    const activeBrochures = useMemo<Brochure[]>(() => {
+        if (useMock || !mediaList || mediaList.length === 0) return BROCHURES;
+
+        const list: Brochure[] = [];
+        let counter = 1;
+        mediaList.forEach((m) => {
+            if (Array.isArray(m.items)) {
+                m.items.forEach((item: any) => {
+                    if (item.category === "brochure" || item.mediaType === "document") {
+                        list.push({
+                            id: counter++,
+                            title: item.title || m.title || "Project Brochure",
+                            project: m.project?.title || "SpaceAge Group",
+                            pages: item.pages || 16,
+                            size: item.fileSize ? `${(item.fileSize / (1024 * 1024)).toFixed(1)} MB` : "5.4 MB",
+                            year: m.createdAt ? new Date(m.createdAt).getFullYear().toString() : "2026",
+                            coverSrc: item.thumbnail || item.url || "/images/media/brochure-1.jpg",
+                            downloadSrc: item.url,
+                            description: item.description || '',
+                        });
+                    }
+                });
+            }
+        });
+        return list.length > 0 ? list : BROCHURES;
+    }, [useMock, mediaList]);
+
+    const activeVideos = useMemo<Video[]>(() => {
+        if (useMock || !mediaList || mediaList.length === 0) return VIDEOS;
+
+        const list: Video[] = [];
+        let counter = 1;
+        mediaList.forEach((m) => {
+            if (Array.isArray(m.items)) {
+                m.items.forEach((item: any) => {
+                    if (item.category === "video" || item.mediaType === "video") {
+                        const durationSec = item.duration || 150;
+                        const durationStr = `${Math.floor(durationSec / 60)}:${String(durationSec % 60).padStart(2, '0')}`;
+                        list.push({
+                            id: counter++,
+                            title: item.title || m.title || "Walkthrough Video",
+                            description: item.description || m.title || "Detailed project walkthrough.",
+                            youtubeId: getYoutubeId(item.url),
+                            duration: durationStr,
+                            category: item.subCategory || (item.category === "video" ? "Walkthrough" : "Drone View"),
+                            year: m.createdAt ? new Date(m.createdAt).getFullYear().toString() : "2026",
+                            thumbnail: item.thumbnail || undefined,
+                            provider: item.provider || "youtube",
+                            url: item.url,
+                            isFeatured: !!item.isMainImage,
+                        });
+                    }
+                });
+            }
+        });
+
+        // Place featured items at the beginning
+        list.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+
+        return list.length > 0 ? list : VIDEOS;
+    }, [useMock, mediaList]);
+
+    const filteredVideos = videoFilter === "All" ? activeVideos : activeVideos.filter((v) => v.category === videoFilter);
 
     const scrollToSection = (id: string) => {
         const el = document.getElementById(id);
@@ -578,9 +733,9 @@ export default function MediaPage() {
                             </p>
                             <div className="flex flex-wrap gap-4 mt-10">
                                 {[
-                                    { label: "Flyers", count: FLYERS.length, id: "flyers" },
-                                    { label: "Brochures", count: BROCHURES.length, id: "brochures" },
-                                    { label: "Videos", count: VIDEOS.length, id: "videos" },
+                                    { label: "Flyers", count: activeFlyers.length, id: "flyers" },
+                                    { label: "Brochures", count: activeBrochures.length, id: "brochures" },
+                                    { label: "Videos", count: activeVideos.length, id: "videos" },
                                 ].map((item) => (
                                     <button key={item.id} onClick={() => scrollToSection(item.id)} className="flex items-center gap-3 px-5 py-2.5 border border-gray-200 hover:border-[#c9a84c] transition-colors group">
                                         <span className="text-xl font-bold text-gray-900 group-hover:text-[#c9a84c] transition-colors font-serif">{item.count}</span>
@@ -593,14 +748,14 @@ export default function MediaPage() {
                 </section>
 
                 {/* ── JUMP NAV ──────────────────────────────────────────────── */}
-                <JumpNav active={activeSection} onScroll={scrollToSection} />
+                <JumpNav active={activeSection} onScroll={scrollToSection} flyerCount={activeFlyers.length} brochureCount={activeBrochures.length} videoCount={activeVideos.length} />
 
                 {/* ── FLYERS SECTION ───────────────────────────────────────── */}
                 <section id="flyers" className="py-24 bg-white" style={{ scrollMarginTop: "112px" }}>
                     <div className="max-w-7xl mx-auto px-6 lg:px-8">
                         <SectionHeader number="01" label="Marketing Flyers" title="Project Flyers" subtitle="Campaign and launch flyers for our residential and commercial projects. Click any flyer to view full size or download." />
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
-                            {FLYERS.map((flyer, i) => <FlyerCard key={flyer.id} flyer={flyer} index={i} onClick={() => setFlyerLightbox(i)} />)}
+                            {activeFlyers.map((flyer, i) => <FlyerCard key={flyer.id} flyer={flyer} index={i} onClick={() => setFlyerLightbox(i)} />)}
                         </div>
                     </div>
                 </section>
@@ -612,7 +767,7 @@ export default function MediaPage() {
                     <div className="max-w-7xl mx-auto px-6 lg:px-8">
                         <SectionHeader number="02" label="Project Brochures" title="Download Brochures" subtitle="Detailed brochures with floor plans, specifications, amenity details, and investment information. Available for download in PDF." />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {BROCHURES.map((brochure, i) => <BrochureCard key={brochure.id} brochure={brochure} index={i} onClick={() => setBrochureLightbox(i)} />)}
+                            {activeBrochures.map((brochure, i) => <BrochureCard key={brochure.id} brochure={brochure} index={i} onClick={() => setBrochureLightbox(i)} />)}
                         </div>
                         <div className="mt-10 p-6 border border-gray-100 bg-gray-50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div>
@@ -640,7 +795,7 @@ export default function MediaPage() {
                             {VIDEO_CATEGORIES.map((cat) => (
                                 <button key={cat} onClick={() => setVideoFilter(cat)} className={`text-xs font-medium px-4 py-2 border transition-all duration-200 ${videoFilter === cat ? "bg-gray-900 border-gray-900 text-white" : "bg-white border-gray-200 text-gray-400 hover:text-gray-600"}`}>
                                     {cat}
-                                    {cat !== "All" && <span className="ml-1.5 text-[10px] opacity-60">({VIDEOS.filter((v) => v.category === cat).length})</span>}
+                                    {cat !== "All" && <span className="ml-1.5 text-[10px] opacity-60">({activeVideos.filter((v) => v.category === cat).length})</span>}
                                 </button>
                             ))}
                         </div>
@@ -648,7 +803,7 @@ export default function MediaPage() {
                         {filteredVideos.length > 0 && (
                             <div className="mb-8">
                                 <div className="group relative overflow-hidden cursor-pointer bg-gray-900" style={{ aspectRatio: "21/9" }} onClick={() => setActiveVideo(filteredVideos[0])}>
-                                    <img src={`https://img.youtube.com/vi/${filteredVideos[0].youtubeId}/maxresdefault.jpg`} alt={filteredVideos[0].title} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-50 group-hover:scale-105 transition-all duration-700" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                                    <img src={filteredVideos[0].thumbnail || `https://img.youtube.com/vi/${filteredVideos[0].youtubeId}/maxresdefault.jpg`} alt={filteredVideos[0].title} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-50 group-hover:scale-105 transition-all duration-700" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
                                     <div className="absolute inset-0 flex items-center px-10 lg:px-16">
                                         <div className="max-w-xl">
@@ -714,9 +869,11 @@ export default function MediaPage() {
                 <Footer />
             </div>
 
-            {flyerLightbox !== null && <Lightbox items={FLYERS} activeIndex={flyerLightbox} onClose={() => setFlyerLightbox(null)} onPrev={() => setFlyerLightbox((i) => Math.max(0, (i ?? 0) - 1))} onNext={() => setFlyerLightbox((i) => Math.min(FLYERS.length - 1, (i ?? 0) + 1))} type="flyer" />}
-            {brochureLightbox !== null && <Lightbox items={BROCHURES} activeIndex={brochureLightbox} onClose={() => setBrochureLightbox(null)} onPrev={() => setBrochureLightbox((i) => Math.max(0, (i ?? 0) - 1))} onNext={() => setBrochureLightbox((i) => Math.min(BROCHURES.length - 1, (i ?? 0) + 1))} type="brochure" />}
+            {flyerLightbox !== null && <Lightbox items={activeFlyers} activeIndex={flyerLightbox} onClose={() => setFlyerLightbox(null)} onPrev={() => setFlyerLightbox((i) => Math.max(0, (i ?? 0) - 1))} onNext={() => setFlyerLightbox((i) => Math.min(activeFlyers.length - 1, (i ?? 0) + 1))} type="flyer" />}
+            {brochureLightbox !== null && <Lightbox items={activeBrochures} activeIndex={brochureLightbox} onClose={() => setBrochureLightbox(null)} onPrev={() => setBrochureLightbox((i) => Math.max(0, (i ?? 0) - 1))} onNext={() => setBrochureLightbox((i) => Math.min(activeBrochures.length - 1, (i ?? 0) + 1))} type="brochure" />}
             {activeVideo && <VideoModal video={activeVideo} onClose={() => setActiveVideo(null)} />}
+            
+            <DevDataToggle />
         </LayoutWrapper>
     );
 }
