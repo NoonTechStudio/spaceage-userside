@@ -232,9 +232,36 @@ function InquiryForm() {
             return;
         }
         setLoading(true);
-        await new Promise((r) => setTimeout(r, 1500));
-        setLoading(false);
-        setSubmitted(true);
+
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+
+        try {
+            const res = await fetch(`${adminApiUrl}/api/inquiry`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: form.name,
+                    email: form.email,
+                    phone: form.phone,
+                    message: form.message,
+                    interest: form.interest,
+                    project: form.project,
+                    budget: form.budget
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || "Failed to submit inquiry");
+            }
+
+            setSubmitted(true);
+        } catch (err: any) {
+            console.error(err);
+            alert(`Error: ${err.message || "Failed to submit inquiry. Please try again."}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const field = (

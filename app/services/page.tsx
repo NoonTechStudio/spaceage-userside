@@ -1,10 +1,77 @@
 // app/services/page.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import LayoutWrapper from "@/components/LayoutWrapper/LayoutWrapper";
 import Footer from "@/components/Footer/Footer";
+import DevDataToggle from "@/components/DevDataToggle/DevDataToggle";
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+const IconMapper: Record<string, React.ReactNode> = {
+    home: (
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M6 42V20L24 6l18 14v22H30V30h-12v12H6z" />
+            <rect x="20" y="30" width="8" height="12" />
+        </svg>
+    ),
+    building: (
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="4" y="10" width="24" height="32" />
+            <rect x="28" y="18" width="16" height="24" />
+            <path d="M10 18h12M10 26h12M10 34h12" />
+            <path d="M34 26h4M34 32h4" />
+        </svg>
+    ),
+    globe: (
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="24" cy="24" r="18" />
+            <path d="M24 6v36M6 24h36" />
+            <path d="M10 14s4 4 14 4 14-4 14-4M10 34s4-4 14-4 14 4 14 4" />
+        </svg>
+    ),
+    scale: (
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M8 40V12l16-8 16 8v28" />
+            <circle cx="24" cy="22" r="6" />
+            <path d="M18 40v-8h12v8" />
+        </svg>
+    ),
+    compass: (
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M6 42L24 6l18 36" />
+            <path d="M12 30h24" />
+            <circle cx="24" cy="20" r="3" />
+            <path d="M24 6v40" />
+        </svg>
+    ),
+    leaf: (
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M24 6C14 6 8 14 8 22c0 10 16 22 16 22s16-12 16-22c0-8-6-16-16-16z" />
+            <circle cx="24" cy="22" r="5" />
+        </svg>
+    ),
+    checkSquare: (
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="8" y="8" width="32" height="32" rx="2" />
+            <path d="M16 24l6 6 10-10" />
+            <path d="M8 18h32" />
+        </svg>
+    ),
+    trendingUp: (
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M8 36l10-12 8 6 14-18" />
+            <circle cx="36" cy="14" r="4" />
+        </svg>
+    ),
+    gavel: (
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M24 6v36M12 12l24 24M36 12L12 36" />
+            <circle cx="24" cy="24" r="6" />
+        </svg>
+    )
+};
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
@@ -231,7 +298,7 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
                             style={{ color: hovered ? "#c9a84c" : "#d4d4d4" }}
                         >
                             <div className="w-6 h-6">
-                                {service.icon}
+                                {typeof service.icon === 'string' ? (IconMapper[service.icon] || IconMapper.home) : service.icon}
                             </div>
                         </div>
                         {/* Number */}
@@ -299,12 +366,34 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
 export default function ServicesPage() {
+    const [useMock, setUseMock] = useState(true);
+    const [dbServices, setDbServices] = useState<any[]>([]);
     const [activeCategory, setActiveCategory] = useState("All Services");
     const [hoveredProcess, setHoveredProcess] = useState<number | null>(null);
 
+    useEffect(() => {
+        setUseMock(localStorage.getItem("use_mock_data") === "true");
+
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+        fetch(`${adminApiUrl}/api/services?status=published`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setDbServices(data);
+            })
+            .catch(console.error);
+    }, []);
+
+    const activeServicesList = useMemo(() => {
+        if (useMock) return SERVICES;
+        return dbServices.map(s => ({
+            ...s,
+            id: s.slug || s._id
+        }));
+    }, [useMock, dbServices]);
+
     const filtered = activeCategory === "All Services"
-        ? SERVICES
-        : SERVICES.filter(s => s.category === activeCategory);
+        ? activeServicesList
+        : activeServicesList.filter(s => s.category === activeCategory);
 
     return (
         <LayoutWrapper>
@@ -562,6 +651,7 @@ export default function ServicesPage() {
                 </section>
 
                 <Footer />
+                <DevDataToggle />
             </div>
         </LayoutWrapper>
     );

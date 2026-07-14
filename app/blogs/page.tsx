@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import LayoutWrapper from "@/components/LayoutWrapper/LayoutWrapper";
 import Footer from "@/components/Footer/Footer";
+import DevDataToggle from "@/components/DevDataToggle/DevDataToggle";
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -707,7 +708,7 @@ function Sidebar({
 
 // ─── JUMP NAV ───────────────────────────────────────────────────────────────
 
-function JumpNav({ active, onScroll }: { active: string; onScroll: (id: string) => void }) {
+function JumpNav({ active, onScroll, count }: { active: string; onScroll: (id: string) => void; count: number }) {
     return (
         <div className="sticky top-0 sm:top-[72px] z-30" style={{ background: "#1a1008", borderBottom: "2px solid #c9a84c" }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-8">
@@ -727,11 +728,11 @@ function JumpNav({ active, onScroll }: { active: string; onScroll: (id: string) 
                     >
                         Latest Articles
                         <span style={{ background: "#c9a84c", color: "#1a1008", fontSize: "0.55rem", fontWeight: 900, padding: "1px 5px" }}>
-                            {BLOG_POSTS.length}
+                            {count}
                         </span>
                     </button>
                     <span style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.68rem", color: "rgba(245,240,232,0.4)" }} className="hidden sm:inline">
-                        {BLOG_POSTS.length} Editions Published
+                        {count} Editions Published
                     </span>
                 </div>
             </div>
@@ -742,18 +743,52 @@ function JumpNav({ active, onScroll }: { active: string; onScroll: (id: string) 
 // ─── MAIN PAGE ──────────────────────────────────────────────────────────────
 
 export default function BlogPage() {
+    const [useMock, setUseMock] = useState(true);
+    const [dbPosts, setDbPosts] = useState<any[]>([]);
     const [activeCategory, setActiveCategory] = useState<BlogCategory>("All");
     const [searchQuery, setSearchQuery] = useState("");
     const [activeSection, setActiveSection] = useState("articles");
 
-    const featuredPost = BLOG_POSTS.find((p) => p.featured);
+    useEffect(() => {
+        setUseMock(localStorage.getItem("use_mock_data") === "true");
+
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+        fetch(`${adminApiUrl}/api/blog?status=published`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setDbPosts(data);
+            })
+            .catch(console.error);
+    }, []);
+
+    const activePosts = useMemo<BlogPost[]>(() => {
+        if (useMock || !dbPosts || dbPosts.length === 0) return BLOG_POSTS;
+
+        return dbPosts.map((item) => ({
+            id: item._id,
+            slug: item.slug,
+            title: item.title,
+            excerpt: item.excerpt || item.description?.substring(0, 180) + '...',
+            content: item.description,
+            category: item.category as BlogCategory,
+            author: item.author || "Space Age Group",
+            authorRole: item.authorRole || "Media & Communications",
+            date: new Date(item.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
+            readTime: item.readTime || "5 min read",
+            image: item.image?.url || "/images/blog/manjusar.jpg",
+            featured: !!item.featured,
+            tags: Array.isArray(item.tags) ? item.tags : [],
+        }));
+    }, [useMock, dbPosts]);
+
+    const featuredPost = activePosts.find((p) => p.featured);
 
     const filtered = useMemo(() => {
-        let posts = BLOG_POSTS.filter((p) => !p.featured || activeCategory !== "All");
+        let posts = activePosts.filter((p) => !p.featured || activeCategory !== "All");
         if (activeCategory !== "All") {
-            posts = BLOG_POSTS.filter((p) => p.category === activeCategory);
+            posts = activePosts.filter((p) => p.category === activeCategory);
         } else {
-            posts = BLOG_POSTS.filter((p) => !p.featured);
+            posts = activePosts.filter((p) => !p.featured);
         }
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
@@ -766,7 +801,7 @@ export default function BlogPage() {
             );
         }
         return posts;
-    }, [activeCategory, searchQuery]);
+    }, [activePosts, activeCategory, searchQuery]);
 
     const scrollToSection = (id: string) => {
         const el = document.getElementById(id);
@@ -793,7 +828,7 @@ export default function BlogPage() {
                 </div>
 
                 {/* ── JUMP NAV ──────────────────────────────────────────────────── */}
-                <JumpNav active={activeSection} onScroll={scrollToSection} />
+                <JumpNav active={activeSection} onScroll={scrollToSection} count={activePosts.length} />
 
                 {/* ── HERO / PAGE TITLE ─────────────────────────────────────────── */}
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
@@ -861,7 +896,7 @@ export default function BlogPage() {
                                 {cat}
                                 {cat !== "All" && (
                                     <span style={{ marginLeft: "5px", opacity: 0.6, fontSize: "0.55rem" }}>
-                                        ({BLOG_POSTS.filter((p) => p.category === cat).length})
+                                        ({activePosts.filter((p) => p.category === cat).length})
                                     </span>
                                 )}
                             </button>
@@ -895,7 +930,7 @@ export default function BlogPage() {
                             {filtered.length === 0 ? (
                                 <div className="clipping text-center py-16" style={{ background: "#f5f0e8" }}>
                                     <p className="np-headline-font" style={{ fontSize: "1.2rem", color: "#6a5a48" }}>No stories found</p>
-                                    <p style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.8rem", color: "#a09070", marginTop: "6px" }}>
+                                    <p style={{ fontFamily: "'IM Fell English', serif", fontStyle: "italic", fontSize: "0.85rem", color: "#a09070", marginTop: "6px" }}>
                                         Try a different section or search term.
                                     </p>
                                 </div>
@@ -911,7 +946,7 @@ export default function BlogPage() {
                         {/* Sidebar */}
                         <div className="lg:border-l lg:pl-8" style={{ borderColor: "#2a1f10" }}>
                             <Sidebar
-                                posts={BLOG_POSTS}
+                                posts={activePosts}
                                 activeCategory={activeCategory}
                                 onCategory={setActiveCategory}
                                 searchQuery={searchQuery}
@@ -950,6 +985,7 @@ export default function BlogPage() {
                 </section>
 
                 <Footer />
+                <DevDataToggle />
             </div>
         </LayoutWrapper>
     );

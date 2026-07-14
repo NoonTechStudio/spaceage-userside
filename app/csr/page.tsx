@@ -257,7 +257,8 @@ function LikeButton({ postId, initialLikes, useMock }: { postId: string | number
 
             if (!useMock) {
                 try {
-                    await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/csr/${postId}`, {
+                    const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+                    await fetch(`${adminApiUrl}/api/csr/${postId}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'like' }),
@@ -585,27 +586,15 @@ export default function CSRPage() {
     const [activeSection, setActiveSection] = useState("initiatives");
 
     useEffect(() => {
-        const stored = localStorage.getItem("dev_use_mock_data");
-        if (stored !== null) {
-            setUseMock(stored === "true");
-        }
+        setUseMock(localStorage.getItem("use_mock_data") === "true");
 
-        const handleToggle = (e: Event) => {
-            const detail = (e as CustomEvent).detail;
-            setUseMock(detail.useMock);
-        };
-        window.addEventListener("devDataToggle", handleToggle);
-
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/csr`)
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+        fetch(`${adminApiUrl}/api/csr`)
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setCsrList(data);
             })
             .catch(console.error);
-
-        return () => {
-            window.removeEventListener("devDataToggle", handleToggle);
-        };
     }, []);
 
     const activePosts = useMemo<CSRPost[]>(() => {
