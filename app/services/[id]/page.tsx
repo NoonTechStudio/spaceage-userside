@@ -401,20 +401,32 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
                         <div className="lg:col-span-5 space-y-8">
                             
                             {/* Stats */}
-                            {service.stats && service.stats.length > 0 && (
-                                <div className="grid grid-cols-2 gap-4">
-                                    {service.stats.map((st: any, idx: number) => (
-                                        <div 
-                                            key={idx} 
-                                            className="bg-white border border-gray-100 p-6 text-center shadow-sm hover:shadow-md transition-shadow"
-                                            style={{ borderTop: `3px solid ${currentAccent}` }}
-                                        >
-                                            <div className="text-3xl font-bold text-gray-950 font-serif mb-1">{st.value}</div>
-                                            <div className="text-[10px] uppercase tracking-wider text-gray-400 font-bold leading-normal">{st.label}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                            {(() => {
+                                let statsList: any[] = [];
+                                if (Array.isArray(service.stats)) {
+                                    statsList = service.stats;
+                                } else if (typeof service.stats === 'string') {
+                                    try { statsList = JSON.parse(service.stats); } catch { statsList = []; }
+                                }
+                                if (!Array.isArray(statsList)) statsList = [];
+
+                                if (statsList.length === 0) return null;
+
+                                return (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {statsList.map((st: any, idx: number) => (
+                                            <div 
+                                                key={idx} 
+                                                className="bg-white border border-gray-100 p-6 text-center shadow-sm hover:shadow-md transition-shadow"
+                                                style={{ borderTop: `3px solid ${currentAccent}` }}
+                                            >
+                                                <div className="text-3xl font-bold text-gray-950 font-serif mb-1">{st.value}</div>
+                                                <div className="text-[10px] uppercase tracking-wider text-gray-400 font-bold leading-normal">{st.label}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
+                            })()}
 
                             {/* Contact Form Card */}
                             <div className="bg-gray-950 text-white p-8 rounded-sm shadow-xl relative overflow-hidden border-t-2" style={{ borderColor: currentAccent }}>

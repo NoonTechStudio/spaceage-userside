@@ -325,24 +325,46 @@ function ServiceCard({ service, index }: { service: typeof SERVICES[0]; index: n
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 divide-x divide-gray-100 border-t border-b border-gray-100 bg-gray-50/30">
-                    {service.stats.map((s, i) => (
-                        <div key={i} className="px-6 py-4 text-center">
-                            <div className="text-xl font-bold text-gray-900 font-serif">{s.value}</div>
-                            <div className="text-[10px] uppercase tracking-wider text-gray-400 mt-0.5">{s.label}</div>
+                {(() => {
+                    let statsList: any[] = [];
+                    if (Array.isArray(service.stats)) {
+                        statsList = service.stats;
+                    } else if (typeof service.stats === 'string') {
+                        try { statsList = JSON.parse(service.stats); } catch { statsList = []; }
+                    }
+                    if (!Array.isArray(statsList)) statsList = [];
+
+                    return (
+                        <div className="grid grid-cols-2 divide-x divide-gray-100 border-t border-b border-gray-100 bg-gray-50/30">
+                            {statsList.map((s: any, i: number) => (
+                                <div key={i} className="px-6 py-4 text-center">
+                                    <div className="text-xl font-bold text-gray-900 font-serif">{s.value}</div>
+                                    <div className="text-[10px] uppercase tracking-wider text-gray-400 mt-0.5">{s.label}</div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
+                    );
+                })()}
 
                 {/* Features */}
                 <div className="p-6 flex-1">
                     <ul className="space-y-2">
-                        {service.features.map((f, i) => (
-                            <li key={i} className="flex items-center gap-3 text-xs text-gray-500">
-                                <span className="w-1 h-1 rounded-full bg-[#c9a84c]" />
-                                {f}
-                            </li>
-                        ))}
+                        {(() => {
+                            let featuresList: any[] = [];
+                            if (Array.isArray(service.features)) {
+                                featuresList = service.features;
+                            } else if (typeof service.features === 'string') {
+                                try { featuresList = JSON.parse(service.features); } catch { featuresList = []; }
+                            }
+                            if (!Array.isArray(featuresList)) featuresList = [];
+
+                            return featuresList.map((f: any, i: number) => (
+                                <li key={i} className="flex items-center gap-3 text-xs text-gray-500">
+                                    <span className="w-1 h-1 rounded-full bg-[#c9a84c]" />
+                                    {f}
+                                </li>
+                            ));
+                        })()}
                     </ul>
                 </div>
 
