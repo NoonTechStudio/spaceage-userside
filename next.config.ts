@@ -27,6 +27,18 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'spaceage-userside.vercel.app',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'spaceagegroupadmin.vercel.app',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

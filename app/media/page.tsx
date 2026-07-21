@@ -378,11 +378,11 @@ function VideoModal({ video, onClose }: { video: Video; onClose: () => void }) {
                 </button>
                 <div className="relative w-full bg-black" style={{ paddingTop: "56.25%" }}>
                     {video.provider === 'cloudinary' && video.url ? (
-                        <video 
-                            className="absolute inset-0 w-full h-full" 
-                            src={video.url} 
-                            controls 
-                            autoPlay 
+                        <video
+                            className="absolute inset-0 w-full h-full"
+                            src={video.url}
+                            controls
+                            autoPlay
                             playsInline
                         />
                     ) : (
@@ -468,11 +468,13 @@ function BrochureCard({ brochure, index, onClick }: { brochure: Brochure; index:
                             <span className="text-[10px] uppercase tracking-[0.2em] text-[#c9a84c] font-semibold block mb-1.5">{brochure.project}</span>
                             <h4 className="text-gray-900 font-bold leading-tight font-serif text-base">{brochure.title}</h4>
                         </div>
-                        <div className="flex items-center gap-4 mt-3">
-                            <span className="text-xs text-gray-400">{brochure.pages} Pages</span>
-                            <span className="w-px h-3 bg-gray-200" />
-                            <span className="text-xs text-gray-400">{brochure.size}</span>
-                            <span className="w-px h-3 bg-gray-200" />
+                        <div className="flex items-center gap-4 mt-3 flex-wrap">
+                            {brochure.pages > 0 && (
+                                <><span className="text-xs text-gray-400">{brochure.pages} Pages</span><span className="w-px h-3 bg-gray-200" /></>
+                            )}
+                            {brochure.size && (
+                                <><span className="text-xs text-gray-400">{brochure.size}</span><span className="w-px h-3 bg-gray-200" /></>
+                            )}
                             <span className="text-xs text-gray-400">{brochure.year}</span>
                         </div>
                         <div className="flex items-center gap-3 mt-4">
@@ -527,8 +529,8 @@ function VideoCard({ video, index, onClick }: { video: Video; index: number; onC
     );
 }
 
-function JumpNav({ active, onScroll, flyerCount, brochureCount, videoCount }: { 
-    active: string; 
+function JumpNav({ active, onScroll, flyerCount, brochureCount, videoCount }: {
+    active: string;
     onScroll: (id: string) => void;
     flyerCount: number;
     brochureCount: number;
@@ -568,6 +570,7 @@ function JumpNav({ active, onScroll, flyerCount, brochureCount, videoCount }: {
 
 export default function MediaPage() {
     const [mediaList, setMediaList] = useState<any[]>([]);
+    const [projectBrochures, setProjectBrochures] = useState<any[]>([]);
     const [useMock, setUseMock] = useState(true);
     const [flyerLightbox, setFlyerLightbox] = useState<number | null>(null);
     const [brochureLightbox, setBrochureLightbox] = useState<number | null>(null);
@@ -578,7 +581,9 @@ export default function MediaPage() {
     useEffect(() => {
         setUseMock(localStorage.getItem("use_mock_data") === "true");
 
-        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
+
+        // Fetch media collections (flyers, videos, media-brochures)
         fetch(`${adminApiUrl}/api/media`)
             .then(res => {
                 if (!res.ok) throw new Error(`Status ${res.status}`);
@@ -589,6 +594,19 @@ export default function MediaPage() {
             })
             .catch(err => {
                 console.warn("Failed to fetch media list from admin API:", err.message);
+            });
+
+        // Fetch project-level brochures (from project brochure field)
+        fetch(`${adminApiUrl}/api/projects/brochures`)
+            .then(res => {
+                if (!res.ok) throw new Error(`Status ${res.status}`);
+                return res.json();
+            })
+            .then(data => {
+                if (Array.isArray(data)) setProjectBrochures(data);
+            })
+            .catch(err => {
+                console.warn("Failed to fetch project brochures from admin API:", err.message);
             });
     }, []);
 
@@ -627,22 +645,53 @@ export default function MediaPage() {
     }, [useMock, mediaList]);
 
     const activeBrochures = useMemo<Brochure[]>(() => {
-        if (useMock || !mediaList || mediaList.length === 0) return BROCHURES;
+        if (useMock) return BROCHURES;
 
         const list: Brochure[] = [];
+        const seenUrls = new Set<string>();
         let counter = 1;
+
+        // Source 1: Project-level brochures (from each project's `brochure` field)
+        projectBrochures.forEach((proj: any) => {
+            const b = proj.brochure as any;
+            if (!b || !b.url) return;
+            if (seenUrls.has(b.url)) return;
+            seenUrls.add(b.url);
+
+            // Use first hero image as cover if brochure is a PDF (no visual)
+            const heroImages = Array.isArray(proj.heroImages) ? proj.heroImages : [];
+            const coverSrc = (isImageUrl(b.url) ? b.url : null) ||
+                (heroImages[0]?.url && isImageUrl(heroImages[0].url) ? heroImages[0].url : null) ||
+                '/images/media/brochure-1.jpg';
+
+            list.push({
+                id: counter++,
+                title: `${proj.title} — Official Brochure`,
+                project: proj.title,
+                pages: b.pages || 0,
+                size: b.fileSize ? `${(b.fileSize / (1024 * 1024)).toFixed(1)} MB` : '',
+                year: proj.createdAt ? new Date(proj.createdAt).getFullYear().toString() : '2026',
+                coverSrc,
+                downloadSrc: b.url,
+                description: `Download the official brochure for ${proj.title} — includes floor plans, specifications, amenity details, and investment information.`,
+            });
+        });
+
+        // Source 2: Media collection brochures (uploaded via Media module)
         mediaList.forEach((m) => {
             if (Array.isArray(m.items)) {
                 m.items.forEach((item: any) => {
                     if (item.category === "brochure" || item.mediaType === "document") {
+                        if (item.url && seenUrls.has(item.url)) return;
+                        if (item.url) seenUrls.add(item.url);
                         list.push({
                             id: counter++,
                             title: item.title || m.title || "Project Brochure",
                             project: m.project?.title || "SpaceAge Group",
-                            pages: item.pages || 16,
-                            size: item.fileSize ? `${(item.fileSize / (1024 * 1024)).toFixed(1)} MB` : "5.4 MB",
-                            year: m.createdAt ? new Date(m.createdAt).getFullYear().toString() : "2026",
-                            coverSrc: item.thumbnail || item.url || "/images/media/brochure-1.jpg",
+                            pages: item.pages || 0,
+                            size: item.fileSize ? `${(item.fileSize / (1024 * 1024)).toFixed(1)} MB` : '',
+                            year: m.createdAt ? new Date(m.createdAt).getFullYear().toString() : '2026',
+                            coverSrc: item.thumbnail || (isImageUrl(item.url) ? item.url : null) || '/images/media/brochure-1.jpg',
                             downloadSrc: item.url,
                             description: item.description || '',
                         });
@@ -650,8 +699,9 @@ export default function MediaPage() {
                 });
             }
         });
+
         return list.length > 0 ? list : BROCHURES;
-    }, [useMock, mediaList]);
+    }, [useMock, mediaList, projectBrochures]);
 
     const activeVideos = useMemo<Video[]>(() => {
         if (useMock || !mediaList || mediaList.length === 0) return VIDEOS;
@@ -872,7 +922,7 @@ export default function MediaPage() {
             {flyerLightbox !== null && <Lightbox items={activeFlyers} activeIndex={flyerLightbox} onClose={() => setFlyerLightbox(null)} onPrev={() => setFlyerLightbox((i) => Math.max(0, (i ?? 0) - 1))} onNext={() => setFlyerLightbox((i) => Math.min(activeFlyers.length - 1, (i ?? 0) + 1))} type="flyer" />}
             {brochureLightbox !== null && <Lightbox items={activeBrochures} activeIndex={brochureLightbox} onClose={() => setBrochureLightbox(null)} onPrev={() => setBrochureLightbox((i) => Math.max(0, (i ?? 0) - 1))} onNext={() => setBrochureLightbox((i) => Math.min(activeBrochures.length - 1, (i ?? 0) + 1))} type="brochure" />}
             {activeVideo && <VideoModal video={activeVideo} onClose={() => setActiveVideo(null)} />}
-            
+
             <DevDataToggle />
         </LayoutWrapper>
     );

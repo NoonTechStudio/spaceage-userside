@@ -297,32 +297,54 @@ export default function BlogDetailPage() {
         };
     }, [useMock, dbPost, slug]);
 
-    // Sync initial likes
+    // Sync initial likes and read browser profile localStorage state
     useEffect(() => {
-        if (post && !useMock) {
+        if (post) {
             setLikes(post.likesCount || 0);
-        } else if (post && useMock) {
-            setLikes(14); // Fixed mock likes
+            try {
+                const storageKey = `liked_blog_${post.id || slug}`;
+                const isLiked = localStorage.getItem(storageKey) === 'true';
+                setHasLiked(isLiked);
+            } catch (e) {
+                console.error("LocalStorage error:", e);
+            }
         }
-    }, [post, useMock]);
+    }, [post, slug]);
 
     const handleLike = async () => {
-        if (hasLiked || useMock || !post) return;
-        setHasLiked(true);
-        setLikes(prev => prev + 1);
+        if (!post) return;
+        const storageKey = `liked_blog_${post.id || slug}`;
+        const nextLikedState = !hasLiked;
+        const action = nextLikedState ? 'like' : 'unlike';
+
+        setHasLiked(nextLikedState);
+        setLikes(prev => nextLikedState ? prev + 1 : Math.max(0, prev - 1));
 
         try {
-            const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+            if (nextLikedState) {
+                localStorage.setItem(storageKey, 'true');
+            } else {
+                localStorage.removeItem(storageKey);
+            }
+        } catch (e) {
+            console.error("LocalStorage write error:", e);
+        }
+
+        try {
+            const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
             const res = await fetch(`${adminApiUrl}/api/blog/${post.id}/engagement`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "like" })
+                body: JSON.stringify({ action })
             });
-            if (!res.ok) throw new Error("Like failed");
+            if (res.ok) {
+                const data = await res.json();
+                if (data && typeof data.likesCount === 'number') {
+                    setLikes(data.likesCount);
+                }
+            }
         } catch (err) {
-            console.error(err);
-            setLikes(prev => prev - 1);
-            setHasLiked(false);
+            console.error("Failed to update blog like:", err);
         }
     };
 
@@ -497,10 +519,10 @@ export default function BlogDetailPage() {
                         <div className="my-12 py-6 border-t border-b border-gray-950 flex flex-col items-center justify-center gap-2">
                             <button
                                 onClick={handleLike}
-                                disabled={hasLiked}
-                                className={`w-14 h-14 rounded-full border border-gray-900 flex items-center justify-center transition-all ${
-                                    hasLiked ? "bg-rose-500 text-white border-rose-600 cursor-default" : "bg-white text-gray-900 hover:bg-rose-50 hover:text-rose-600 hover:scale-105"
+                                className={`w-14 h-14 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
+                                    hasLiked ? "bg-rose-500 text-white border-rose-600 shadow-md scale-105" : "bg-white text-gray-900 border-gray-900 hover:bg-rose-50 hover:text-rose-600 hover:scale-105"
                                 }`}
+                                title={hasLiked ? "Unlike post" : "Like post"}
                             >
                                 <svg 
                                     className="w-6 h-6" 

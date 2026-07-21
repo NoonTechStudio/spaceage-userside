@@ -235,6 +235,7 @@ function SectionHeader({ number, label, title, subtitle }: { number: string; lab
 // ─── LIKE BUTTON ────────────────────────────────────────────────────────────
 
 function LikeButton({ postId, initialLikes, useMock }: { postId: string | number; initialLikes: number; useMock: boolean }) {
+    const storageKey = `liked_csr_${postId}`;
     const [liked, setLiked] = useState(false);
     const [count, setCount] = useState(initialLikes);
     const [animating, setAnimating] = useState(false);
@@ -244,29 +245,55 @@ function LikeButton({ postId, initialLikes, useMock }: { postId: string | number
         setCount(initialLikes);
     }, [initialLikes]);
 
+    // Read initial liked status for this Chrome profile from localStorage
+    useEffect(() => {
+        try {
+            const isLiked = localStorage.getItem(storageKey) === 'true';
+            setLiked(isLiked);
+        } catch (e) {
+            console.error('LocalStorage read error:', e);
+        }
+    }, [storageKey]);
+
     const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (liked) {
-            setLiked(false);
-            setCount((c) => c - 1);
-        } else {
-            setLiked(true);
-            setCount((c) => c + 1);
+        const nextLikedState = !liked;
+        const action = nextLikedState ? 'like' : 'unlike';
+
+        setLiked(nextLikedState);
+        setCount((c) => nextLikedState ? c + 1 : Math.max(0, c - 1));
+
+        if (nextLikedState) {
             setAnimating(true);
             setTimeout(() => setAnimating(false), 600);
+        }
 
-            if (!useMock) {
-                try {
-                    const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
-                    await fetch(`${adminApiUrl}/api/csr/${postId}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'like' }),
-                    });
-                } catch (err) {
-                    console.error("Failed to update like in db:", err);
+        // Persist Chrome profile like state in localStorage
+        try {
+            if (nextLikedState) {
+                localStorage.setItem(storageKey, 'true');
+            } else {
+                localStorage.removeItem(storageKey);
+            }
+        } catch (e) {
+            console.error('LocalStorage write error:', e);
+        }
+
+        try {
+            const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
+            const res = await fetch(`${adminApiUrl}/api/csr/${postId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && typeof data.likes === 'number') {
+                    setCount(data.likes);
                 }
             }
+        } catch (err) {
+            console.error("Failed to update like in db:", err);
         }
     };
 
@@ -601,9 +628,18 @@ export default function CSRPage() {
         if (useMock || !csrList || csrList.length === 0) return CSR_POSTS;
 
         return csrList.map((item) => {
-            const mappedImages = Array.isArray(item.items) && item.items.length > 0 
-                ? item.items.map((x: any) => x.url) 
-                : (Array.isArray(item.images) && item.images.length > 0 ? item.images : ["/images/csr/placeholder.jpg"]);
+            const rawItems = Array.isArray(item.items) ? item.items : [];
+            const sortedItems = [...rawItems].sort((a: any, b: any) => (b.isMainImage ? 1 : 0) - (a.isMainImage ? 1 : 0));
+            let mappedImages = sortedItems
+                .filter((x: any) => x.url && x.category !== 'video')
+                .map((x: any) => x.url);
+
+            if (mappedImages.length === 0) {
+                mappedImages = Array.isArray(item.images) && item.images.length > 0 
+                    ? item.images 
+                    : ["/images/csr/placeholder.jpg"];
+            }
+
             return {
                 id: item._id,
                 slug: item.slug,

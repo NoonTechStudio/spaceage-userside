@@ -14,6 +14,7 @@ async function getHeroImages() {
   try {
     const res = await fetch(`${adminApiUrl}/api/hero-images`, {
       next: { revalidate: 10 },
+      signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) {
       console.warn(`[getHeroImages] API returned status ${res.status}`);
@@ -39,6 +40,7 @@ async function getProjects() {
   try {
     const res = await fetch(`${adminApiUrl}/api/projects`, {
       next: { revalidate: 10 },
+      signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) {
       console.warn(`[getProjects] API returned status ${res.status}`);
@@ -60,6 +62,7 @@ async function getTeamMembers() {
   try {
     const res = await fetch(`${adminApiUrl}/api/team`, {
       next: { revalidate: 10 },
+      signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) {
       console.warn(`[getTeamMembers] API returned status ${res.status}`);
