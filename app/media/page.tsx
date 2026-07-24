@@ -571,7 +571,7 @@ function JumpNav({ active, onScroll, flyerCount, brochureCount, videoCount }: {
 export default function MediaPage() {
     const [mediaList, setMediaList] = useState<any[]>([]);
     const [projectBrochures, setProjectBrochures] = useState<any[]>([]);
-    const [useMock, setUseMock] = useState(true);
+    const [useMock, setUseMock] = useState(false);
     const [flyerLightbox, setFlyerLightbox] = useState<number | null>(null);
     const [brochureLightbox, setBrochureLightbox] = useState<number | null>(null);
     const [activeVideo, setActiveVideo] = useState<Video | null>(null);

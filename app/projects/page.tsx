@@ -284,7 +284,7 @@ export default function ProjectsPage() {
   useEffect(() => {
     setUseMock(localStorage.getItem("use_mock_data") === "true");
 
-    const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+    const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
     fetch(`${adminApiUrl}/api/projects`)
       .then(res => {
         if (!res.ok) throw new Error(`Status ${res.status}`);

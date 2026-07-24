@@ -743,7 +743,7 @@ function JumpNav({ active, onScroll, count }: { active: string; onScroll: (id: s
 // ─── MAIN PAGE ──────────────────────────────────────────────────────────────
 
 export default function BlogPage() {
-    const [useMock, setUseMock] = useState(true);
+    const [useMock, setUseMock] = useState(false);
     const [dbPosts, setDbPosts] = useState<any[]>([]);
     const [activeCategory, setActiveCategory] = useState<BlogCategory>("All");
     const [searchQuery, setSearchQuery] = useState("");
@@ -752,7 +752,7 @@ export default function BlogPage() {
     useEffect(() => {
         setUseMock(localStorage.getItem("use_mock_data") === "true");
 
-        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
         fetch(`${adminApiUrl}/api/blog?status=published`)
             .then(res => res.json())
             .then(data => {

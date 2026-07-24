@@ -215,7 +215,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
             return;
         }
 
-        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
         fetch(`${adminApiUrl}/api/services/${id}`)
             .then(res => {
                 if (!res.ok) throw new Error("Service not found");
@@ -237,7 +237,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         e.preventDefault();
         setFormSubmitting(true);
 
-        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
 
         try {
             const res = await fetch(`${adminApiUrl}/api/inquiry`, {

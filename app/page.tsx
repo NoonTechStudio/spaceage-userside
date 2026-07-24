@@ -10,7 +10,7 @@ import DevDataToggle from "@/components/DevDataToggle/DevDataToggle";
 
 
 async function getHeroImages() {
-  const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+  const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
   try {
     const res = await fetch(`${adminApiUrl}/api/hero-images`, {
       next: { revalidate: 10 },
@@ -36,7 +36,7 @@ async function getHeroImages() {
 }
 
 async function getProjects() {
-  const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+  const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
   try {
     const res = await fetch(`${adminApiUrl}/api/projects`, {
       next: { revalidate: 10 },
@@ -58,7 +58,7 @@ async function getProjects() {
 }
 
 async function getTeamMembers() {
-  const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+  const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
   try {
     const res = await fetch(`${adminApiUrl}/api/team`, {
       next: { revalidate: 10 },

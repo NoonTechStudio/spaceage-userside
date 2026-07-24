@@ -222,7 +222,7 @@ export default function BlogDetailPage() {
     const params = useParams();
     const slug = params.slug as string;
 
-    const [useMock, setUseMock] = useState(true);
+    const [useMock, setUseMock] = useState(false);
     const [dbPost, setDbPost] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -246,7 +246,7 @@ export default function BlogDetailPage() {
             return;
         }
 
-        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
 
         // Fetch dynamic blog data from backend API
         fetch(`${adminApiUrl}/api/blog/${slug}`)
@@ -354,7 +354,7 @@ export default function BlogDetailPage() {
         setCommentSubmitting(true);
 
         try {
-            const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+            const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
             const res = await fetch(`${adminApiUrl}/api/blog/${post.id}/engagement`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

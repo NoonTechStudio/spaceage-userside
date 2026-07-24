@@ -606,7 +606,7 @@ function JumpNav({ active, onScroll, count }: { active: string; onScroll: (id: s
 // ─── MAIN PAGE ──────────────────────────────────────────────────────────────
 
 export default function CSRPage() {
-    const [useMock, setUseMock] = useState(true);
+    const [useMock, setUseMock] = useState(false);
     const [csrList, setCsrList] = useState<any[]>([]);
 
     const [activeCategory, setActiveCategory] = useState("All");
@@ -615,7 +615,7 @@ export default function CSRPage() {
     useEffect(() => {
         setUseMock(localStorage.getItem("use_mock_data") === "true");
 
-        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:3000';
+        const adminApiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'https://spaceagegroupadmin.vercel.app';
         fetch(`${adminApiUrl}/api/csr`)
             .then(res => res.json())
             .then(data => {
