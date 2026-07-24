@@ -442,7 +442,7 @@ export default function ProjectDetailsPage() {
   const [activeSection, setActiveSection] = useState("overview");
 
   const [useMock, setUseMock] = useState(false);
-  const [project, setProject] = useState<any>(null);
+  const [project, setProject] = useState<any | null>(null);
 
   useEffect(() => {
     setUseMock(localStorage.getItem("use_mock_data") === "true");
@@ -478,7 +478,7 @@ export default function ProjectDetailsPage() {
 
     const floorPlans = Array.isArray(project.floorPlans)
       ? project.floorPlans.map((fp: any) => ({
-          type: fp.bhkType || "Plan",
+          type: fp.bhkType || fp.title || "Plan",
           image: fp.url || "/images/project-1.jpg",
           area: fp.carpetArea || "TBD",
         }))
@@ -486,31 +486,31 @@ export default function ProjectDetailsPage() {
 
     const commonSpecs = Array.isArray(project.commonSpecifications)
       ? project.commonSpecifications.map((s: any) => ({
-          field: s.label,
-          value: s.value,
-        }))
+          field: s.label || s.category || s.field || "",
+          value: s.value || s.detail || "",
+        })).filter((s: any) => s.field && s.value)
       : [];
 
     const commercialSpecs = Array.isArray(project.commercialSpecifications)
       ? project.commercialSpecifications.map((s: any) => ({
-          field: s.label,
-          value: s.value,
-        }))
+          field: s.label || s.category || s.field || "",
+          value: s.value || s.detail || "",
+        })).filter((s: any) => s.field && s.value)
       : [];
 
     const amenities = Array.isArray(project.amenities)
       ? project.amenities.map((a: any) => ({
-          name: a.name,
+          name: a.name || a.title || "",
           icon: a.icon || "✨",
           category: a.category || "General",
-        }))
+        })).filter((a: any) => a.name)
       : [];
 
     const samplePhotos = Array.isArray(project.sampleHousePhotos)
       ? project.sampleHousePhotos.map((photo: any, index: number) => ({
-          id: photo._id || index + 1,
+          id: photo._id || photo.id || index + 1,
           url: photo.url,
-          roomType: photo.roomType || "Room",
+          roomType: photo.roomType || photo.title || "Room",
         }))
       : [];
 
@@ -660,72 +660,84 @@ export default function ProjectDetailsPage() {
         </div>
         
         {/* Common Specifications */}
-        <div id="specifications">
-          <SectionWrapper title="Common Specifications">
-            <SpecificationsTable specs={activeProject.commonSpecs} title="Building Specifications" />
-          </SectionWrapper>
-        </div>
+        {activeProject.commonSpecs.length > 0 && (
+          <div id="specifications">
+            <SectionWrapper title="Common Specifications">
+              <SpecificationsTable specs={activeProject.commonSpecs} title="Building Specifications" />
+            </SectionWrapper>
+          </div>
+        )}
         
         {/* Commercial Specifications */}
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 -mt-8 mb-8">
-          <SpecificationsTable specs={activeProject.commercialSpecs} title="Commercial Details & Pricing" />
-        </div>
+        {activeProject.commercialSpecs.length > 0 && (
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 -mt-8 mb-8">
+            <SpecificationsTable specs={activeProject.commercialSpecs} title="Commercial Details & Pricing" />
+          </div>
+        )}
         
         {/* Layout Plan */}
-        <div id="overview">
-          <SectionWrapper title="Layout Plan">
-            <div className="relative aspect-[16/9] bg-gray-100 rounded-lg overflow-hidden shadow-lg">
-              <Image
-                src={activeProject.layoutPlan}
-                alt="Site Layout Plan"
-                fill
-                className="object-cover"
-                sizes="(max-width: 1200px) 100vw, 1200px"
-              />
-              <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors cursor-pointer" />
-            </div>
-            <p className="text-sm text-gray-500 mt-3">Master plan showing project layout, tower positions, and green spaces</p>
-          </SectionWrapper>
-        </div>
+        {activeProject.layoutPlan && (
+          <div id="overview">
+            <SectionWrapper title="Layout Plan">
+              <div className="relative aspect-[16/9] bg-gray-100 rounded-lg overflow-hidden shadow-lg">
+                <Image
+                  src={activeProject.layoutPlan}
+                  alt="Site Layout Plan"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1200px) 100vw, 1200px"
+                />
+                <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors cursor-pointer" />
+              </div>
+              <p className="text-sm text-gray-500 mt-3">Master plan showing project layout, tower positions, and green spaces</p>
+            </SectionWrapper>
+          </div>
+        )}
         
         {/* Floor Plans */}
-        <div id="floor-plans">
-          <SectionWrapper title="Floor Plans">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {activeProject.floorPlans.map((plan: FloorPlan, idx: number) => (
-                <div key={idx} className="group cursor-pointer">
-                  <div className="relative aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden shadow-md group-hover:shadow-xl transition-shadow">
-                    <Image
-                      src={plan.image}
-                      alt={`${plan.type} Floor Plan`}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
+        {activeProject.floorPlans.length > 0 && (
+          <div id="floor-plans">
+            <SectionWrapper title="Floor Plans">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {activeProject.floorPlans.map((plan: FloorPlan, idx: number) => (
+                  <div key={idx} className="group cursor-pointer">
+                    <div className="relative aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden shadow-md group-hover:shadow-xl transition-shadow">
+                      <Image
+                        src={plan.image}
+                        alt={`${plan.type} Floor Plan`}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    </div>
+                    <div className="mt-3 text-center">
+                      <h3 className="font-semibold text-gray-900">{plan.type}</h3>
+                      <p className="text-sm text-gray-500">{plan.area}</p>
+                    </div>
                   </div>
-                  <div className="mt-3 text-center">
-                    <h3 className="font-semibold text-gray-900">{plan.type}</h3>
-                    <p className="text-sm text-gray-500">{plan.area}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </SectionWrapper>
-        </div>
+                ))}
+              </div>
+            </SectionWrapper>
+          </div>
+        )}
         
         {/* Amenities */}
-        <div id="amenities">
-          <SectionWrapper title="Amenities">
-            <AmenitiesGrid amenities={activeProject.amenities} />
-          </SectionWrapper>
-        </div>
+        {activeProject.amenities.length > 0 && (
+          <div id="amenities">
+            <SectionWrapper title="Amenities">
+              <AmenitiesGrid amenities={activeProject.amenities} />
+            </SectionWrapper>
+          </div>
+        )}
         
         {/* Sample House Photos */}
-        <div id="gallery">
-          <SectionWrapper title="Sample House Photos">
-            <PhotoGallery photos={activeProject.samplePhotos} />
-          </SectionWrapper>
-        </div>
+        {activeProject.samplePhotos.length > 0 && (
+          <div id="gallery">
+            <SectionWrapper title="Sample House Photos">
+              <PhotoGallery photos={activeProject.samplePhotos} />
+            </SectionWrapper>
+          </div>
+        )}
         
         {/* Virtual Tour & Brochure Row */}
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
